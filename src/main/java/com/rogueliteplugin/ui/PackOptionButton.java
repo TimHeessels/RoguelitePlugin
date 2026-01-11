@@ -12,12 +12,14 @@ public class PackOptionButton extends JButton
 
     private float alpha = 1f;
     private final String label;
+    private final String type;
     private final Icon icon;
 
-    public PackOptionButton(String label, Icon icon)
+    public PackOptionButton(String label, String type, Icon icon)
     {
         this.label = label;
         this.icon = icon;
+        this.type = type;
 
         Dimension size = new Dimension(CARD_WIDTH, CARD_HEIGHT);
         setPreferredSize(size);
@@ -44,7 +46,13 @@ public class PackOptionButton extends JButton
 
     public void reveal()
     {
-        setText(label);
+        setText("<html><center>"
+                + label + "<br>"
+                + "<span style='font-size:9px; color:#888888;'>"
+                + type.toString()
+                + "</span>"
+                + "</center></html>");
+
         setIcon(icon);
         setVerticalTextPosition(SwingConstants.BOTTOM);
         setHorizontalTextPosition(SwingConstants.CENTER);

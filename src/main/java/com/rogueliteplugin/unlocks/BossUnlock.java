@@ -1,15 +1,15 @@
 package com.rogueliteplugin.unlocks;
 
-import javax.swing.Icon;
+import javax.swing.*;
 
-public class AreaUnlock implements Unlock
+public class BossUnlock implements Unlock
 {
     private final String id;
     private final String name;
     private final Icon icon;
     private final String description;
 
-    public AreaUnlock(String id, String name, Icon icon, String description)
+    public BossUnlock(String id, String name, Icon icon, String description)
     {
         this.id = id;
         this.name = name;
@@ -20,7 +20,7 @@ public class AreaUnlock implements Unlock
     @Override
     public UnlockType getType()
     {
-        return UnlockType.AREA;
+        return UnlockType.BOSS;
     }
 
     @Override

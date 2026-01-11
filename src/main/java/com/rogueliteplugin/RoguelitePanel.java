@@ -19,8 +19,7 @@ import java.util.Map;
 public class RoguelitePanel extends PluginPanel {
     private final RoguelitePlugin plugin;
 
-    private final JLabel pointsLabel = new JLabel();
-    private final JLabel xpLabel = new JLabel();
+    private static final int UNLOCK_ICON_WIDTH = 25;
     private final JButton buyButton = new JButton("Buy new pack");
     private final JPanel content = new JPanel();
 
@@ -133,6 +132,7 @@ public class RoguelitePanel extends PluginPanel {
 
                 PackOptionButton button = new PackOptionButton(
                         option.getDisplayName(),
+                        option.getDisplayType(),
                         icon
                 );
                 button.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -210,7 +210,20 @@ public class RoguelitePanel extends PluginPanel {
         }
 
         content.add(Box.createVerticalStrut(12));
-        content.add(new JLabel("Unlocks"));
+        int totalUnlocks = plugin.getUnlockRegistry().getAll().size();
+
+        long unlockedCount = plugin.getUnlockRegistry()
+                .getAll()
+                .stream()
+                .filter(plugin::isUnlocked)
+                .count();
+
+        JLabel unlocksHeader = new JLabel(
+                "Unlocks (" + unlockedCount + " / " + totalUnlocks + ")"
+        );
+        unlocksHeader.setFont(unlocksHeader.getFont().deriveFont(Font.BOLD));
+
+        content.add(unlocksHeader);
         content.add(Box.createVerticalStrut(6));
 
         for (UnlockType type : UnlockType.values()) {
@@ -227,57 +240,68 @@ public class RoguelitePanel extends PluginPanel {
             for (Unlock unlock : list) {
                 boolean unlocked = plugin.isUnlocked(unlock);
 
-                String prefix = unlocked ? "✔ " : "✖ ";
-                JLabel label = new JLabel(prefix + unlock.getDisplayName(), resolveIcon(unlock), JLabel.LEFT);
+                Icon icon = resolveIcon(unlock);
+
+                JPanel row = new JPanel();
+                row.setLayout(new BoxLayout(row, BoxLayout.X_AXIS));
+                row.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+// Icon column (fixed width)
+                JLabel iconLabel = new JLabel(icon);
+                iconLabel.setPreferredSize(new Dimension(UNLOCK_ICON_WIDTH, UNLOCK_ICON_WIDTH));
+                iconLabel.setMinimumSize(new Dimension(UNLOCK_ICON_WIDTH, UNLOCK_ICON_WIDTH));
+                iconLabel.setMaximumSize(new Dimension(UNLOCK_ICON_WIDTH, UNLOCK_ICON_WIDTH));
+
+// Text label
+                JLabel textLabel = new JLabel(unlock.getDisplayName());
+                textLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
                 if (!unlocked) {
-                    label.setForeground(new Color(170, 60, 60)); // muted red
+                    textLabel.setForeground(new Color(170, 60, 60));
+                    if (icon != null)
+                        iconLabel.setEnabled(false);
                 }
+                else
+                    textLabel.setForeground(new Color(70, 167, 32));
 
-                label.setToolTipText(
-                        unlocked
-                                ? "Unlocked"
-                                : "Locked"
-                );
-                content.add(label);
+                textLabel.setToolTipText(unlock.getDescription());
+
+// Assemble row
+                row.add(iconLabel);
+                row.add(Box.createHorizontalStrut(6));
+                row.add(textLabel);
+
+                content.add(row);
             }
             content.add(Box.createVerticalStrut(8));
         }
     }
 
-    private Icon resolveIcon(Unlock unlock)
-    {
+    private Icon resolveIcon(Unlock unlock) {
         UnlockIcon icon = unlock.getIcon();
-        if (icon == null)
-        {
+        if (icon == null) {
             return null;
         }
 
-        if (icon instanceof ImageUnlockIcon)
-        {
+        if (icon instanceof ImageUnlockIcon) {
             return ((ImageUnlockIcon) icon).getIcon();
         }
 
-        if (icon instanceof SpriteUnlockIcon)
-        {
+        if (icon instanceof SpriteUnlockIcon) {
             SpriteUnlockIcon sprite = (SpriteUnlockIcon) icon;
 
-            try
-            {
+            try {
                 BufferedImage img = plugin
                         .getSpriteManager()
                         .getSprite(sprite.getSpriteId(), 0);
 
-                if (img == null)
-                {
+                if (img == null) {
                     return null;
                 }
 
                 Image scaled = img.getScaledInstance(18, 18, Image.SCALE_SMOOTH);
                 return new ImageIcon(scaled);
-            }
-            catch (AssertionError e)
-            {
+            } catch (AssertionError e) {
                 // Sprite system not ready yet
                 return null;
             }

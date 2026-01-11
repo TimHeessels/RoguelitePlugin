@@ -14,12 +14,10 @@ import com.google.inject.Provides;
 import com.rogueliteplugin.pack.PackOption;
 import com.rogueliteplugin.pack.UnlockPackOption;
 import com.rogueliteplugin.unlocks.*;
+import net.runelite.api.*;
+import net.runelite.api.events.GameTick;
 import net.runelite.client.callback.ClientThread;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.ChatMessageType;
-import net.runelite.api.Client;
-import net.runelite.api.Skill;
-import net.runelite.api.GameState;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.StatChanged;
 import net.runelite.client.eventbus.EventBus;
@@ -51,7 +49,6 @@ public class RoguelitePlugin extends Plugin {
     {
         return spriteManager;
     }
-
 
     @Inject
     private ClientThread clientThread;
@@ -122,6 +119,7 @@ public class RoguelitePlugin extends Plugin {
     protected void startUp() throws Exception {
         overlayManager.add(overlay);
         eventBus.register(skillBlocker);
+
         totalXpGained = config.totalXpGained();
         totalPoints = config.totalPoints();
         pointsSpent = config.pointsSpent();
@@ -201,6 +199,56 @@ public class RoguelitePlugin extends Plugin {
             return;
         }
         addXp(delta);
+    }
+
+    @Subscribe
+    public void onGameTick(GameTick tick)
+    {
+        Player player = client.getLocalPlayer();
+        if (player == null)
+        {
+            return;
+        }
+
+        int regionId = player.getWorldLocation().getRegionID();
+
+        if (!isRegionUnlocked(regionId))
+        {
+            warnLockedRegion(regionId);
+        }
+    }
+
+    public boolean isInLockedRegion()
+    {
+        if (client.getLocalPlayer() == null)
+        {
+            return false;
+        }
+
+        int regionId = client.getLocalPlayer()
+                .getWorldLocation()
+                .getRegionID();
+
+        return !isRegionUnlocked(regionId);
+    }
+
+    private int lastWarnedRegion = -1;
+
+    private void warnLockedRegion(int regionId)
+    {
+        if (regionId == lastWarnedRegion)
+        {
+            return;
+        }
+
+        lastWarnedRegion = regionId;
+
+        client.addChatMessage(
+                ChatMessageType.GAMEMESSAGE,
+                "",
+                "⚠ You are in a locked region.",
+                null
+        );
     }
 
     private void addXp(int xp) {
@@ -361,17 +409,24 @@ public class RoguelitePlugin extends Plugin {
         }
     }
 
-    public Icon getSpriteIcon(int spriteId)
+    public boolean isRegionUnlocked(int regionId)
     {
-        BufferedImage img = spriteManager.getSprite(spriteId, 0);
-        if (img == null)
+        for (Unlock unlock : unlockRegistry.getAll())
         {
-            return null;
+            if (!(unlock instanceof RegionUnlock))
+            {
+                continue;
+            }
+
+            RegionUnlock regionUnlock = (RegionUnlock) unlock;
+
+            if (isUnlocked(unlock) && regionUnlock.containsRegion(regionId))
+            {
+                return true;
+            }
         }
 
-        // Scale if desired
-        Image scaled = img.getScaledInstance(18, 18, Image.SCALE_SMOOTH);
-        return new ImageIcon(scaled);
+        return false;
     }
 
 

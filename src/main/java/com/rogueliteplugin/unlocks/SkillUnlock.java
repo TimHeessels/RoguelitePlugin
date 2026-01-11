@@ -1,15 +1,30 @@
 package com.rogueliteplugin.unlocks;
 
 import net.runelite.api.Skill;
-import javax.swing.Icon;
+import net.runelite.client.game.SkillIconManager;
+
+import javax.swing.*;
+import java.awt.image.BufferedImage;
 
 public class SkillUnlock implements Unlock
 {
     private final Skill skill;
+    private final ImageUnlockIcon icon;
 
-    public SkillUnlock(Skill skill)
+    public SkillUnlock(Skill skill, SkillIconManager skillIconManager)
     {
         this.skill = skill;
+
+        BufferedImage img = skillIconManager.getSkillImage(skill);
+
+        if (img != null)
+        {
+            this.icon = new ImageUnlockIcon(new ImageIcon(img));
+        }
+        else
+        {
+            this.icon = null;
+        }
     }
 
     @Override
@@ -31,14 +46,14 @@ public class SkillUnlock implements Unlock
     }
 
     @Override
-    public String getDescription()
+    public UnlockIcon getIcon()
     {
-        return "Allows training " + skill.getName() + ".";
+        return icon;
     }
 
     @Override
-    public UnlockIcon getIcon()
+    public String getDescription()
     {
-        return null; // skills are represented elsewhere
+        return "Unlocks the " + skill.getName() + " skill.";
     }
 }

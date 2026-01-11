@@ -26,6 +26,12 @@ public class UnlockPackOption implements PackOption
     }
 
     @Override
+    public String getDisplayType()
+    {
+        return unlock.getType().toString();
+    }
+
+    @Override
     public void onChosen(RoguelitePlugin plugin)
     {
         plugin.unlock(unlock);

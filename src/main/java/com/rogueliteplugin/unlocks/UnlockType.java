@@ -3,10 +3,11 @@ package com.rogueliteplugin.unlocks;
 public enum UnlockType
 {
     SKILL,
-    AREA,
+    REGION,
     SHOP,
     MINIGAME,
     TRANSPORT,
-    FEATURE
+    CLUE,
+    BOSS
 }
 
