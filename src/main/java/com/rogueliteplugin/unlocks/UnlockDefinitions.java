@@ -25,6 +25,7 @@ public final class UnlockDefinitions {
         registerMinigames(registry, plugin);
         registerBosses(registry);
         registerTransport(registry);
+        registerQuestTiers(registry);
     }
 
     private static void registerSkills(
@@ -39,12 +40,185 @@ public final class UnlockDefinitions {
         }
     }
 
+    private static void registerQuestTiers(UnlockRegistry registry) {
+        registry.register(
+                new QuestUnlock(
+                        "Quests2002",
+                        "Quests released in 2002",
+                        IconLoader.load("quests/quest_icon.png"),
+                        "Access to all quests released in 2002.",
+                        List.of()
+                )
+        );
+
+        registry.register(
+                new QuestUnlock(
+                        "Quests2003",
+                        "Quests released in 2003",
+                        IconLoader.load("quests/quest_icon.png"),
+                        "Access to all quests released in 2003.",
+                        List.of(new RequiresUnlockRequirement("Quests2002", registry))
+                )
+        );
+
+        registry.register(
+                new QuestUnlock(
+                        "Quests2004",
+                        "Quests released in 2004",
+                        IconLoader.load("quests/quest_icon.png"),
+                        "Access to all quests released in 2004.",
+                        List.of(new RequiresUnlockRequirement("Quests2003", registry))
+                )
+        );
+
+        registry.register(
+                new QuestUnlock(
+                        "Quests2005",
+                        "Quests released in 2005",
+                        IconLoader.load("quests/quest_icon.png"),
+                        "Access to all quests released in 2005.",
+                        List.of(new RequiresUnlockRequirement("Quests2004", registry))
+                )
+        );
+
+        registry.register(
+                new QuestUnlock(
+                        "Quests2006",
+                        "Quests released in 2006",
+                        IconLoader.load("quests/quest_icon.png"),
+                        "Access to all quests released in 2006.",
+                        List.of(new RequiresUnlockRequirement("Quests2005", registry))
+                )
+        );
+
+        registry.register(
+                new QuestUnlock(
+                        "Quests2007",
+                        "Quests released in 2007",
+                        IconLoader.load("quests/quest_icon.png"),
+                        "Access to all quests released in 2007.",
+                        List.of(new RequiresUnlockRequirement("Quests2006", registry))
+                )
+        );
+
+        registry.register(
+                new QuestUnlock(
+                        "Quests2016",
+                        "Quests released in 2016",
+                        IconLoader.load("quests/quest_icon.png"),
+                        "Access to all quests released in 2016.",
+                        List.of(new RequiresUnlockRequirement("Quests2007", registry))
+                )
+        );
+
+        registry.register(
+                new QuestUnlock(
+                        "Quests2017",
+                        "Quests released in 2017",
+                        IconLoader.load("quests/quest_icon.png"),
+                        "Access to all quests released in 2017.",
+                        List.of(new RequiresUnlockRequirement("Quests2016", registry))
+                )
+        );
+
+        registry.register(
+                new QuestUnlock(
+                        "Quests2018",
+                        "Quests released in 2018",
+                        IconLoader.load("quests/quest_icon.png"),
+                        "Access to all quests released in 2018.",
+                        List.of(new RequiresUnlockRequirement("Quests2017", registry))
+                )
+        );
+
+        registry.register(
+                new QuestUnlock(
+                        "Quests2019",
+                        "Quests released in 2019",
+                        IconLoader.load("quests/quest_icon.png"),
+                        "Access to all quests released in 2019.",
+                        List.of(new RequiresUnlockRequirement("Quests2018", registry))
+                )
+        );
+
+        registry.register(
+                new QuestUnlock(
+                        "Quests2020",
+                        "Quests released in 2020",
+                        IconLoader.load("quests/quest_icon.png"),
+                        "Access to all quests released in 2020.",
+                        List.of(new RequiresUnlockRequirement("Quests2019", registry))
+                )
+        );
+
+        registry.register(
+                new QuestUnlock(
+                        "Quests2021",
+                        "Quests released in 2021",
+                        IconLoader.load("quests/quest_icon.png"),
+                        "Access to all quests released in 2021.",
+                        List.of(new RequiresUnlockRequirement("Quests2020", registry))
+                )
+        );
+
+        registry.register(
+                new QuestUnlock(
+                        "Quests2022",
+                        "Quests released in 2022",
+                        IconLoader.load("quests/quest_icon.png"),
+                        "Access to all quests released in 2022.",
+                        List.of(new RequiresUnlockRequirement("Quests2021", registry))
+                )
+        );
+
+        registry.register(
+                new QuestUnlock(
+                        "Quests2023",
+                        "Quests released in 2023",
+                        IconLoader.load("quests/quest_icon.png"),
+                        "Access to all quests released in 2023.",
+                        List.of(new RequiresUnlockRequirement("Quests2022", registry))
+                )
+        );
+
+        registry.register(
+                new QuestUnlock(
+                        "Quests2024",
+                        "Quests released in 2024",
+                        IconLoader.load("quests/quest_icon.png"),
+                        "Access to all quests released in 2024.",
+                        List.of(new RequiresUnlockRequirement("Quests2023", registry))
+                )
+        );
+
+        registry.register(
+                new QuestUnlock(
+                        "Quests2025",
+                        "Quests released in 2025",
+                        IconLoader.load("quests/quest_icon.png"),
+                        "Access to all quests released in 2025.",
+                        List.of(new RequiresUnlockRequirement("Quests2024", registry))
+                )
+        );
+
+        registry.register(
+                new QuestUnlock(
+                        "Quests2026",
+                        "Quests released in 2026",
+                        IconLoader.load("quests/quest_icon.png"),
+                        "Access to all quests released in 2026.",
+                        List.of(new RequiresUnlockRequirement("Quests2025", registry))
+                )
+        );
+
+    }
+
     private static void registerTransport(UnlockRegistry registry) {
         registry.register(
                 new TransportUnlock(
                         "FairyRings",
                         "Fairy rings",
-                        IconLoader.load("clues/beginnerclue.png"),
+                        IconLoader.load("teleports/Fairy_ring.png"),
                         "Allows the use of fairy rings."
                 )
         );
@@ -67,7 +241,7 @@ public final class UnlockDefinitions {
                         IconLoader.load("clues/easyclue.png"),
                         "Allows opening of easy clue caskets.",
                         List.of(
-                                new RequiresUnlockRequirement("BEGINNERCLUES")
+                                new RequiresUnlockRequirement("BEGINNERCLUES", registry)
                         )
                 )
         );
@@ -78,7 +252,7 @@ public final class UnlockDefinitions {
                         IconLoader.load("clues/mediumclue.png"),
                         "Allows opening of hard clue caskets.",
                         List.of(
-                                new RequiresUnlockRequirement("EASYCLUES")
+                                new RequiresUnlockRequirement("EASYCLUES", registry)
                         )
                 )
         );
@@ -89,7 +263,7 @@ public final class UnlockDefinitions {
                         IconLoader.load("clues/hardclue.png"),
                         "Allows opening of hard clue caskets.",
                         List.of(
-                                new RequiresUnlockRequirement("MEDIUMCLUES")
+                                new RequiresUnlockRequirement("MEDIUMCLUES", registry)
                         )
                 )
         );
@@ -100,7 +274,7 @@ public final class UnlockDefinitions {
                         IconLoader.load("clues/eliteclue.png"),
                         "Allows opening of elite clue caskets.",
                         List.of(
-                                new RequiresUnlockRequirement("HARDCLUES")
+                                new RequiresUnlockRequirement("HARDCLUES", registry)
                         )
                 )
         );
@@ -111,7 +285,7 @@ public final class UnlockDefinitions {
                         IconLoader.load("clues/masterclue.png"),
                         "Allows opening of master clue caskets.",
                         List.of(
-                                new RequiresUnlockRequirement("ELITECLUES")
+                                new RequiresUnlockRequirement("ELITECLUES", registry)
                         ))
         );
     }

@@ -3,9 +3,6 @@ package com.rogueliteplugin.challenge;
 import com.rogueliteplugin.requirements.AppearRequirement;
 import net.runelite.api.Skill;
 import net.runelite.api.events.StatChanged;
-import net.runelite.client.events.ServerNpcLoot;
-import net.runelite.client.game.ItemManager;
-import net.runelite.client.game.ItemStack;
 
 import java.util.List;
 
@@ -31,7 +28,7 @@ public class SkillXPChallenge implements Challenge {
 
     @Override
     public ChallengeType getType() {
-        return ChallengeType.DROP;
+        return ChallengeType.Skill;
     }
 
     @Override
@@ -40,7 +37,7 @@ public class SkillXPChallenge implements Challenge {
     }
 
     @Override
-    public String getChallengeName() {
+    public String getDisplayName() {
         return name;
     }
 

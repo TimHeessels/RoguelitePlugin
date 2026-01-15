@@ -20,7 +20,7 @@ public class MinigameUnlock implements Unlock
     @Override
     public UnlockType getType()
     {
-        return UnlockType.MINIGAME;
+        return UnlockType.Minigames;
     }
 
     @Override

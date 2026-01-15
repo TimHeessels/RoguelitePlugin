@@ -30,7 +30,7 @@ public class SkillUnlock implements Unlock
     @Override
     public UnlockType getType()
     {
-        return UnlockType.SKILL;
+        return UnlockType.Skills;
     }
 
     @Override

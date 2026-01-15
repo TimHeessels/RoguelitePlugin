@@ -29,7 +29,7 @@ public class CombatChallenge implements Challenge {
 
     @Override
     public ChallengeType getType() {
-        return ChallengeType.COMBAT;
+        return ChallengeType.Combat;
     }
 
     @Override
@@ -38,7 +38,7 @@ public class CombatChallenge implements Challenge {
     }
 
     @Override
-    public String getChallengeName() {
+    public String getDisplayName() {
         return name;
     }
 

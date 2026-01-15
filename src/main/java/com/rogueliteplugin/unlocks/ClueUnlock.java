@@ -23,7 +23,7 @@ public class ClueUnlock implements Unlock {
 
     @Override
     public UnlockType getType() {
-        return UnlockType.CLUE;
+        return UnlockType.Clues;
     }
 
     @Override

@@ -26,7 +26,7 @@ public class DropValueChallenge implements Challenge {
 
     @Override
     public ChallengeType getType() {
-        return ChallengeType.DROP;
+        return ChallengeType.Drops;
     }
 
     @Override
@@ -35,7 +35,7 @@ public class DropValueChallenge implements Challenge {
     }
 
     @Override
-    public String getChallengeName() {
+    public String getDisplayName() {
         return name;
     }
 

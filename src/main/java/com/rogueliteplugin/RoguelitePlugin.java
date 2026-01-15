@@ -140,7 +140,7 @@ public class RoguelitePlugin extends Plugin {
 
         //Setup all possible challenges
         challengeRegistry = new ChallengeRegistry();
-        ChallengeDefinitions.registerAll(challengeRegistry, skillIconManager, this);
+        ChallengeDefinitions.registerAll(challengeRegistry, unlockRegistry, skillIconManager, this);
 
         //Load current challenge state
         challengeManager.loadFromConfig(config, client, challengeRegistry);
@@ -376,29 +376,6 @@ public class RoguelitePlugin extends Plugin {
         return true;
     }
 
-    public boolean canAppearAsPackChallenge(Challenge challenge) {
-        if (challenge == null || challengeRegistry == null) {
-            return false;
-        }
-
-        List<AppearRequirement> reqs = challenge.getRequirements();
-        if (reqs == null || reqs.isEmpty()) {
-            return true;
-        }
-
-        for (AppearRequirement req : reqs) {
-            try {
-                if (!req.isMet(this)) {
-                    return false;
-                }
-            } catch (Exception e) {
-                // Defensive: never let UI crash because of requirements
-                return false;
-            }
-        }
-        return true;
-    }
-
     public boolean isSkillUnlocked(Skill skill) {
         return unlockedIds.contains("SKILL_" + skill.name());
     }
@@ -533,5 +510,10 @@ public class RoguelitePlugin extends Plugin {
 
         // Safety clamp
         return Math.max(min, Math.min(max, result));
+    }
+
+    public void Debug(String textToDebug)
+    {
+        log.debug(textToDebug);
     }
 }

@@ -4,6 +4,7 @@ import com.rogueliteplugin.RoguelitePlugin;
 import com.rogueliteplugin.requirements.CombatLevelRequirement;
 import com.rogueliteplugin.requirements.RequiresUnlockRequirement;
 import com.rogueliteplugin.requirements.SkillLevelRequirement;
+import com.rogueliteplugin.unlocks.UnlockRegistry;
 import net.runelite.api.Skill;
 import net.runelite.client.game.SkillIconManager;
 
@@ -15,11 +16,12 @@ public final class ChallengeDefinitions {
 
     public static void registerAll(
             ChallengeRegistry registry,
+            UnlockRegistry unlockRegistry,
             SkillIconManager skillIconManager,
             RoguelitePlugin plugin
     ) {
         registerCombat(registry);
-        registerSkill(registry);
+        registerSkill(registry, unlockRegistry);
         registerDrops(registry);
         registerStarterChallenges(registry);
     }
@@ -32,7 +34,7 @@ public final class ChallengeDefinitions {
                         100,
                         5000,
                         "Get your good boots on."
-        ));
+                ));
         registry.register(
                 new OneHpAfterDamageChallenge(
                         "HealthChallenge",
@@ -92,14 +94,14 @@ public final class ChallengeDefinitions {
         );
     }
 
-    private static void registerSkill(ChallengeRegistry registry) {
+    private static void registerSkill(ChallengeRegistry registry, UnlockRegistry unlockRegistry) {
         registry.register(new SkillXPChallenge(
                 "GainAttackXP",
                 "Gain $ XP in Attack",
                 1, 200_000,
                 "Train your accuracy.",
                 Skill.ATTACK,
-                List.of(new RequiresUnlockRequirement("SKILL_ATTACK"))
+                List.of(new RequiresUnlockRequirement("SKILL_ATTACK", unlockRegistry))
         ));
 
         registry.register(new SkillXPChallenge(
@@ -108,7 +110,7 @@ public final class ChallengeDefinitions {
                 1, 200_000,
                 "Power through your enemies.",
                 Skill.STRENGTH,
-                List.of(new RequiresUnlockRequirement("SKILL_STRENGTH"))
+                List.of(new RequiresUnlockRequirement("SKILL_STRENGTH", unlockRegistry))
         ));
 
         registry.register(new SkillXPChallenge(
@@ -117,7 +119,7 @@ public final class ChallengeDefinitions {
                 1, 200_000,
                 "Harden your resolve.",
                 Skill.DEFENCE,
-                List.of(new RequiresUnlockRequirement("SKILL_DEFENCE"))
+                List.of(new RequiresUnlockRequirement("SKILL_DEFENCE", unlockRegistry))
         ));
 
         registry.register(new SkillXPChallenge(
@@ -126,7 +128,7 @@ public final class ChallengeDefinitions {
                 1, 200_000,
                 "Strike from afar.",
                 Skill.RANGED,
-                List.of(new RequiresUnlockRequirement("SKILL_RANGED"))
+                List.of(new RequiresUnlockRequirement("SKILL_RANGED", unlockRegistry))
         ));
 
         registry.register(new SkillXPChallenge(
@@ -135,7 +137,7 @@ public final class ChallengeDefinitions {
                 1, 200_000,
                 "Seek divine favor.",
                 Skill.PRAYER,
-                List.of(new RequiresUnlockRequirement("SKILL_PRAYER"))
+                List.of(new RequiresUnlockRequirement("SKILL_PRAYER", unlockRegistry))
         ));
 
         registry.register(new SkillXPChallenge(
@@ -144,7 +146,7 @@ public final class ChallengeDefinitions {
                 1, 200_000,
                 "Master the arcane.",
                 Skill.MAGIC,
-                List.of(new RequiresUnlockRequirement("SKILL_MAGIC"))
+                List.of(new RequiresUnlockRequirement("SKILL_MAGIC", unlockRegistry))
         ));
 
         registry.register(new SkillXPChallenge(
@@ -153,7 +155,7 @@ public final class ChallengeDefinitions {
                 1, 200_000,
                 "Cook something delicious.",
                 Skill.COOKING,
-                List.of(new RequiresUnlockRequirement("SKILL_COOKING"))
+                List.of(new RequiresUnlockRequirement("SKILL_COOKING", unlockRegistry))
         ));
 
         registry.register(new SkillXPChallenge(
@@ -162,7 +164,7 @@ public final class ChallengeDefinitions {
                 1, 200_000,
                 "Chop until it falls.",
                 Skill.WOODCUTTING,
-                List.of(new RequiresUnlockRequirement("SKILL_WOODCUTTING"))
+                List.of(new RequiresUnlockRequirement("SKILL_WOODCUTTING", unlockRegistry))
         ));
 
         registry.register(new SkillXPChallenge(
@@ -171,7 +173,7 @@ public final class ChallengeDefinitions {
                 1, 200_000,
                 "Craft something sharp.",
                 Skill.FLETCHING,
-                List.of(new RequiresUnlockRequirement("SKILL_FLETCHING"))
+                List.of(new RequiresUnlockRequirement("SKILL_FLETCHING", unlockRegistry))
         ));
 
         registry.register(new SkillXPChallenge(
@@ -180,7 +182,7 @@ public final class ChallengeDefinitions {
                 1, 200_000,
                 "Cast out your net and relax.",
                 Skill.FISHING,
-                List.of(new RequiresUnlockRequirement("SKILL_FISHING"))
+                List.of(new RequiresUnlockRequirement("SKILL_FISHING", unlockRegistry))
         ));
 
         registry.register(new SkillXPChallenge(
@@ -189,7 +191,7 @@ public final class ChallengeDefinitions {
                 1, 200_000,
                 "Let it burn.",
                 Skill.FIREMAKING,
-                List.of(new RequiresUnlockRequirement("SKILL_FIREMAKING"))
+                List.of(new RequiresUnlockRequirement("SKILL_FIREMAKING", unlockRegistry))
         ));
 
         registry.register(new SkillXPChallenge(
@@ -198,7 +200,7 @@ public final class ChallengeDefinitions {
                 1, 200_000,
                 "Create something useful.",
                 Skill.CRAFTING,
-                List.of(new RequiresUnlockRequirement("SKILL_CRAFTING"))
+                List.of(new RequiresUnlockRequirement("SKILL_CRAFTING", unlockRegistry))
         ));
 
         registry.register(new SkillXPChallenge(
@@ -207,7 +209,7 @@ public final class ChallengeDefinitions {
                 1, 200_000,
                 "Hammer it into shape.",
                 Skill.SMITHING,
-                List.of(new RequiresUnlockRequirement("SKILL_SMITHING"))
+                List.of(new RequiresUnlockRequirement("SKILL_SMITHING", unlockRegistry))
         ));
 
         registry.register(new SkillXPChallenge(
@@ -216,7 +218,7 @@ public final class ChallengeDefinitions {
                 1, 200_000,
                 "Dig deep.",
                 Skill.MINING,
-                List.of(new RequiresUnlockRequirement("SKILL_MINING"))
+                List.of(new RequiresUnlockRequirement("SKILL_MINING", unlockRegistry))
         ));
 
         registry.register(new SkillXPChallenge(
@@ -225,7 +227,7 @@ public final class ChallengeDefinitions {
                 1, 200_000,
                 "Mix something potent.",
                 Skill.HERBLORE,
-                List.of(new RequiresUnlockRequirement("SKILL_HERBLORE"))
+                List.of(new RequiresUnlockRequirement("SKILL_HERBLORE", unlockRegistry))
         ));
 
         registry.register(new SkillXPChallenge(
@@ -234,7 +236,7 @@ public final class ChallengeDefinitions {
                 1, 200_000,
                 "Keep moving.",
                 Skill.AGILITY,
-                List.of(new RequiresUnlockRequirement("SKILL_AGILITY"))
+                List.of(new RequiresUnlockRequirement("SKILL_AGILITY", unlockRegistry))
         ));
 
         registry.register(new SkillXPChallenge(
@@ -243,7 +245,7 @@ public final class ChallengeDefinitions {
                 1, 200_000,
                 "Steal without being seen.",
                 Skill.THIEVING,
-                List.of(new RequiresUnlockRequirement("SKILL_THIEVING"))
+                List.of(new RequiresUnlockRequirement("SKILL_THIEVING", unlockRegistry))
         ));
 
         registry.register(new SkillXPChallenge(
@@ -252,7 +254,7 @@ public final class ChallengeDefinitions {
                 1, 200_000,
                 "Earn it the hard way.",
                 Skill.SLAYER,
-                List.of(new RequiresUnlockRequirement("SKILL_SLAYER"))
+                List.of(new RequiresUnlockRequirement("SKILL_SLAYER", unlockRegistry))
         ));
 
         registry.register(new SkillXPChallenge(
@@ -261,7 +263,7 @@ public final class ChallengeDefinitions {
                 1, 200_000,
                 "Let it grow.",
                 Skill.FARMING,
-                List.of(new RequiresUnlockRequirement("SKILL_FARMING"))
+                List.of(new RequiresUnlockRequirement("SKILL_FARMING", unlockRegistry))
         ));
 
         registry.register(new SkillXPChallenge(
@@ -270,7 +272,7 @@ public final class ChallengeDefinitions {
                 1, 200_000,
                 "Channel raw essence.",
                 Skill.RUNECRAFT,
-                List.of(new RequiresUnlockRequirement("SKILL_RUNECRAFT"))
+                List.of(new RequiresUnlockRequirement("SKILL_RUNECRAFT", unlockRegistry))
         ));
 
         registry.register(new SkillXPChallenge(
@@ -279,7 +281,7 @@ public final class ChallengeDefinitions {
                 1, 200_000,
                 "Set the perfect trap.",
                 Skill.HUNTER,
-                List.of(new RequiresUnlockRequirement("SKILL_HUNTER"))
+                List.of(new RequiresUnlockRequirement("SKILL_HUNTER", unlockRegistry))
         ));
 
         registry.register(new SkillXPChallenge(
@@ -288,7 +290,7 @@ public final class ChallengeDefinitions {
                 1, 200_000,
                 "Build something solid.",
                 Skill.CONSTRUCTION,
-                List.of(new RequiresUnlockRequirement("SKILL_CONSTRUCTION"))
+                List.of(new RequiresUnlockRequirement("SKILL_CONSTRUCTION", unlockRegistry))
         ));
 
         registry.register(new SkillXPChallenge(
@@ -297,7 +299,7 @@ public final class ChallengeDefinitions {
                 1, 200_000,
                 "Ride the open seas.",
                 Skill.SAILING,
-                List.of(new RequiresUnlockRequirement("SKILL_SAILING"))
+                List.of(new RequiresUnlockRequirement("SKILL_SAILING", unlockRegistry))
         ));
     }
 

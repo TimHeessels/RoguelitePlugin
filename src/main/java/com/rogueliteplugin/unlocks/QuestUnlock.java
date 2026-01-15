@@ -5,15 +5,15 @@ import com.rogueliteplugin.requirements.AppearRequirement;
 import javax.swing.*;
 import java.util.List;
 
-public class BossUnlock implements Unlock {
+public class QuestUnlock implements Unlock {
     private final String id;
     private final String name;
     private final Icon icon;
     private final String description;
     private final List<AppearRequirement> requirements;
 
-    public BossUnlock(String id, String name, Icon icon, String description,
-                      List<AppearRequirement> requirements) {
+    public QuestUnlock(String id, String name, Icon icon, String description,
+                       List<AppearRequirement> requirements) {
         this.id = id;
         this.name = name;
         this.icon = icon;
@@ -23,7 +23,7 @@ public class BossUnlock implements Unlock {
 
     @Override
     public UnlockType getType() {
-        return UnlockType.Bosses;
+        return UnlockType.Quests;
     }
 
     @Override
@@ -47,8 +47,7 @@ public class BossUnlock implements Unlock {
     }
 
     @Override
-    public List<AppearRequirement> getRequirements()
-    {
+    public List<AppearRequirement> getRequirements() {
         return requirements;
     }
 }

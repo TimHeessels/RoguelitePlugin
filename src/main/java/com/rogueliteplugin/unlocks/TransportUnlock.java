@@ -20,7 +20,7 @@ public class TransportUnlock implements Unlock
     @Override
     public UnlockType getType()
     {
-        return UnlockType.TRANSPORT;
+        return UnlockType.Transport;
     }
 
     @Override

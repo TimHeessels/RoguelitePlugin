@@ -25,7 +25,7 @@ public class CombatLevelRequirement implements AppearRequirement {
     }
 
     @Override
-    public String getDescription() {
+    public String getRequiredUnlockTitle() {
         return "Combat level " + requiredLevel + " or higher.";
     }
 }

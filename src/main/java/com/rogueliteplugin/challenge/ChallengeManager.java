@@ -2,7 +2,6 @@ package com.rogueliteplugin.challenge;
 
 import com.rogueliteplugin.RogueliteConfig;
 import net.runelite.api.Client;
-import net.runelite.api.SoundEffectID;
 
 import java.text.NumberFormat;
 import java.util.Locale;
@@ -18,7 +17,7 @@ public class ChallengeManager {
     }
 
     public String getChallengeFormatted() {
-        return current.getChallenge().getChallengeName().replace("$", NumberFormat
+        return current.getChallenge().getDisplayName().replace("$", NumberFormat
                 .getInstance(new Locale("nl", "NL"))
                 .format(current.getGoal()));
     }

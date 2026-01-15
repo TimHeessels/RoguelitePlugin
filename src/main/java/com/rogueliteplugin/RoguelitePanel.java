@@ -5,6 +5,8 @@ import com.rogueliteplugin.pack.UnlockPackOption;
 import com.rogueliteplugin.requirements.AppearRequirement;
 import com.rogueliteplugin.ui.PackOptionButton;
 import com.rogueliteplugin.unlocks.*;
+import com.rogueliteplugin.challenge.Challenge;
+import com.rogueliteplugin.challenge.ChallengeType;
 import net.runelite.client.ui.PluginPanel;
 import net.runelite.api.Client;
 import com.google.inject.Inject;
@@ -27,7 +29,10 @@ public class RoguelitePanel extends PluginPanel {
     List<PackOptionButton> optionButtons = new ArrayList<>();
 
     private JPanel rulesPanel;
-    private boolean rulesVisible = false;
+    private Map<UnlockType, List<Unlock>> cachedByType;
+    private Map<ChallengeType, List<Challenge>> cachedChallengesByType;
+    private JPanel unlocksContentPanel;
+    private JPanel challengesContentPanel;
 
     @Inject
     private Client client;
@@ -103,10 +108,13 @@ public class RoguelitePanel extends PluginPanel {
         fadeOut.start();
     }
 
-
     public void refresh() {
         optionButtons.clear();
         content.removeAll();
+
+        // Clear caches to force rebuild on refresh
+        cachedByType = null;
+        cachedChallengesByType = null;
 
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
 
@@ -117,114 +125,139 @@ public class RoguelitePanel extends PluginPanel {
             content.add(new JLabel("You can unlock a new booster pack!"));
         content.add(Box.createVerticalStrut(6));
 
+        // Always show the buy button
         if (plugin.playerIsLoggedIn()) {
-
-            if (plugin.getPackChoiceState() == PackChoiceState.NONE) {
-                JButton buyButton = new JButton("Buy new pack");
-                buyButton.setEnabled(!plugin.anyChallengeActive());
-                buyButton.addActionListener(e -> plugin.onBuyPackClicked());
-                content.add(buyButton);
-            } else if (plugin.getPackChoiceState() == PackChoiceState.CHOOSING) {
-                content.add(new JLabel("Choose a card:"));
-                content.add(Box.createVerticalStrut(8));
-
-                for (PackOption option : plugin.getCurrentPackOptions()) {
-                    Unlock unlock = ((UnlockPackOption) option).getUnlock();
-                    Icon icon = resolveIcon(unlock);
-                    int balancedAmount = plugin.getBalancedChallengeAmount(((UnlockPackOption) option).getChallengeLowAmount(), ((UnlockPackOption) option).getChallengeHighAmount());
-                    String challengeName = option.getChallengeName().replace("$", NumberFormat
-                            .getInstance(new Locale("nl", "NL"))
-                            .format(balancedAmount));
-
-                    PackOptionButton button = new PackOptionButton(
-                            option.getDisplayName(),
-                            option.getDisplayType(),
-                            challengeName,
-                            option.getChallengeType(),
-                            icon
-                    );
-                    button.setAlignmentX(Component.LEFT_ALIGNMENT);
-                    button.setMaximumSize(
-                            new Dimension(Integer.MAX_VALUE, button.getPreferredSize().height)
-                    );
-                    button.addActionListener(e -> plugin.onPackOptionSelected(option));
-
-                    optionButtons.add(button);
-                    content.add(button);
-                    content.add(Box.createVerticalStrut(6));
-                }
-
-                animateReveal();
-            }
-        } else {
-            content.add(new JLabel("You need to be logged in to buy card packs!"));
-            content.add(Box.createVerticalStrut(6));
+            JButton buyButton = new JButton("Buy new pack");
+            buyButton.setMargin(new Insets(8, 12, 8, 12));
+            buyButton.setFont(buyButton.getFont().deriveFont(14f));
+            buyButton.setPreferredSize(new Dimension(Integer.MAX_VALUE, 40));
+            buyButton.setEnabled(!plugin.anyChallengeActive());
+            buyButton.addActionListener(e -> plugin.onBuyPackClicked());
+            content.add(buyButton);
         }
 
-        //Rules
-        JButton toggleRules = new JButton("Show rules ▸");
-        toggleRules.setAlignmentX(Component.LEFT_ALIGNMENT);
+        // Show pack choice cards if user is choosing
+        if (plugin.playerIsLoggedIn() && plugin.getPackChoiceState() == PackChoiceState.CHOOSING) {
+            content.add(new JLabel("Choose a card:"));
+            content.add(Box.createVerticalStrut(8));
 
-        rulesPanel = new JPanel();
-        rulesPanel.setLayout(new BoxLayout(rulesPanel, BoxLayout.Y_AXIS));
-        rulesPanel.setVisible(false);
+            for (PackOption option : plugin.getCurrentPackOptions()) {
+                Unlock unlock = ((UnlockPackOption) option).getUnlock();
+                Icon icon = resolveIcon(unlock);
+                int balancedAmount = plugin.getBalancedChallengeAmount(((UnlockPackOption) option).getChallengeLowAmount(), ((UnlockPackOption) option).getChallengeHighAmount());
+                String challengeName = option.getChallengeName().replace("$", NumberFormat
+                        .getInstance(new Locale("nl", "NL"))
+                        .format(balancedAmount));
+
+                PackOptionButton button = new PackOptionButton(
+                        option.getDisplayName(),
+                        option.getDisplayType(),
+                        challengeName,
+                        option.getChallengeType(),
+                        icon
+                );
+                button.setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
+                button.setAlignmentX(Component.LEFT_ALIGNMENT);
+                button.setMaximumSize(
+                        new Dimension(Integer.MAX_VALUE, button.getPreferredSize().height)
+                );
+                button.addActionListener(e -> plugin.onPackOptionSelected(option));
+
+                optionButtons.add(button);
+                content.add(button);
+                content.add(Box.createVerticalStrut(6));
+            }
+
+            animateReveal();
+        }
+
+        // Always show rules panel
+        String rulesHtml = "<html>"
+                + "<b>Rules</b><br>"
+                + "• Complete the active challenge to open a booster pack.<br>"
+                + "• Packs contain cards that unlock a range of content, see the list on this page to see what you have access to.<br>"
+                + "• Blocked content is not physically blocked as that is against runescape rules, but it is indicated as best as possible.<br>"
+                + "• Each card also contains a new challenge, so pick wisely.<br>"
+                + "</html>";
+
+        rulesPanel = new CollapsiblePanel("Rules", new JLabel(rulesHtml));
         rulesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-// Example rules text
-        JLabel rulesText = new JLabel(
-                "<html>"
-                        + "<b>Rules</b><br>"
-                        + "• Complete the active challenge to open a booster pack.<br>"
-                        + "• Packs contain cards that unlock a range of content, see the list on this page to see what you have access to.<br>"
-                        + "• Blocked content is not physically blocked as that is against runescape rules, but it is indicated as best as possible.<br>"
-                        + "• Each card also contains a new challenge, so pick wisely.<br>"
-                        + "</html>"
-        );
-        rulesText.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        rulesPanel.add(rulesText);
-
-        toggleRules.addActionListener(e ->
-        {
-            rulesVisible = !rulesVisible;
-            rulesPanel.setVisible(rulesVisible);
-            toggleRules.setText(rulesVisible ? "Hide rules ▾" : "Show rules ▸");
-
-            revalidate();
-            repaint();
-        });
-
-        content.add(Box.createVerticalStrut(6));
-        content.add(toggleRules);
         content.add(Box.createVerticalStrut(6));
         content.add(rulesPanel);
         content.add(Box.createVerticalStrut(12));
 
-        addUnlockedSection(content);
+        // Always show unlocks section
+        updateUnlocksSection(content);
+
+        // Always show challenges section
+        updateChallengesSection(content);
 
         revalidate();
         repaint();
     }
 
-    private static void leftAlign(JComponent c) {
-        c.setAlignmentX(Component.LEFT_ALIGNMENT);
-    }
-
-    private void addUnlockedSection(JPanel content) {
+    private void updateUnlocksSection(JPanel content) {
         if (plugin.getUnlockRegistry() == null) {
             return;
         }
 
-        Map<UnlockType, List<Unlock>> byType = new EnumMap<>(UnlockType.class);
-
-        for (Unlock unlock : plugin.getUnlockRegistry().getAll()) {
-            byType.computeIfAbsent(unlock.getType(), t -> new ArrayList<>())
-                    .add(unlock);
+        if (unlocksContentPanel == null) {
+            unlocksContentPanel = new JPanel();
+            unlocksContentPanel.setLayout(new BoxLayout(unlocksContentPanel, BoxLayout.Y_AXIS));
+            content.add(unlocksContentPanel);
+        } else {
+            if (unlocksContentPanel.getParent() != content) {
+                content.add(unlocksContentPanel);
+            }
         }
 
-        content.add(Box.createVerticalStrut(12));
-        int totalUnlocks = plugin.getUnlockRegistry().getAll().size();
+        Map<UnlockType, List<Unlock>> byType = new EnumMap<>(UnlockType.class);
+        List<Unlock> all = new ArrayList<>(plugin.getUnlockRegistry().getAll());
+        all.sort(Comparator.comparing(Unlock::getType).thenComparing(Unlock::getDisplayName));
 
+        for (Unlock unlock : all) {
+            byType.computeIfAbsent(unlock.getType(), t -> new ArrayList<>()).add(unlock);
+        }
+
+        if (cachedByType == null || !byType.equals(cachedByType)) {
+            cachedByType = byType;
+            rebuildUnlocksPanel(unlocksContentPanel, byType);
+        }
+    }
+
+    private void updateChallengesSection(JPanel content) {
+        if (plugin.getChallengeRegistry() == null) {
+            return;
+        }
+
+        if (challengesContentPanel == null) {
+            challengesContentPanel = new JPanel();
+            challengesContentPanel.setLayout(new BoxLayout(challengesContentPanel, BoxLayout.Y_AXIS));
+            content.add(challengesContentPanel);
+        } else {
+            if (challengesContentPanel.getParent() != content) {
+                content.add(challengesContentPanel);
+            }
+        }
+
+        Map<ChallengeType, List<Challenge>> byType = new EnumMap<>(ChallengeType.class);
+        List<Challenge> all = new ArrayList<>(plugin.getChallengeRegistry().getAll());
+        all.sort(Comparator.comparing(Challenge::getType).thenComparing(Challenge::getDisplayName));
+
+        for (Challenge challenge : all) {
+            byType.computeIfAbsent(challenge.getType(), t -> new ArrayList<>()).add(challenge);
+        }
+
+        if (cachedChallengesByType == null || !byType.equals(cachedChallengesByType)) {
+            cachedChallengesByType = byType;
+            rebuildChallengesPanel(challengesContentPanel, byType);
+        }
+    }
+
+    private void rebuildUnlocksPanel(JPanel panel, Map<UnlockType, List<Unlock>> byType) {
+        panel.removeAll();
+
+        int totalUnlocks = plugin.getUnlockRegistry().getAll().size();
         long unlockedCount = plugin.getUnlockRegistry()
                 .getAll()
                 .stream()
@@ -235,9 +268,8 @@ public class RoguelitePanel extends PluginPanel {
                 "Unlocks (" + unlockedCount + " / " + totalUnlocks + ")"
         );
         unlocksHeader.setFont(unlocksHeader.getFont().deriveFont(Font.BOLD));
-
-        content.add(unlocksHeader);
-        content.add(Box.createVerticalStrut(6));
+        panel.add(unlocksHeader);
+        panel.add(Box.createVerticalStrut(6));
 
         for (UnlockType type : UnlockType.values()) {
             List<Unlock> list = byType.get(type);
@@ -245,10 +277,14 @@ public class RoguelitePanel extends PluginPanel {
                 continue;
             }
 
-            JLabel header = new JLabel(type.toString());
-            header.setFont(header.getFont().deriveFont(Font.BOLD));
-            content.add(header);
-            content.add(Box.createVerticalStrut(4));
+            long typeUnlockedCount = list.stream()
+                    .filter(plugin::isUnlocked)
+                    .count();
+            String typeHeader = type + " (" + typeUnlockedCount + "/" + list.size() + ")";
+
+            JPanel categoryContent = new JPanel();
+            categoryContent.setLayout(new BoxLayout(categoryContent, BoxLayout.Y_AXIS));
+            categoryContent.setAlignmentX(Component.LEFT_ALIGNMENT);
 
             for (Unlock unlock : list) {
                 boolean unlocked = plugin.isUnlocked(unlock);
@@ -260,13 +296,11 @@ public class RoguelitePanel extends PluginPanel {
                 row.setLayout(new BoxLayout(row, BoxLayout.X_AXIS));
                 row.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-// Icon column (fixed width)
                 JLabel iconLabel = new JLabel(icon);
                 iconLabel.setPreferredSize(new Dimension(UNLOCK_ICON_WIDTH, UNLOCK_ICON_WIDTH));
                 iconLabel.setMinimumSize(new Dimension(UNLOCK_ICON_WIDTH, UNLOCK_ICON_WIDTH));
                 iconLabel.setMaximumSize(new Dimension(UNLOCK_ICON_WIDTH, UNLOCK_ICON_WIDTH));
 
-// Text label
                 JLabel textLabel = new JLabel(unlock.getDisplayName());
                 textLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -281,14 +315,80 @@ public class RoguelitePanel extends PluginPanel {
                     textLabel.setForeground(new Color(70, 167, 32));
 
                 applyTooltip(textLabel, unlock);
-// Assemble row
+
                 row.add(iconLabel);
                 row.add(Box.createHorizontalStrut(6));
                 row.add(textLabel);
 
-                content.add(row);
+                categoryContent.add(row);
             }
-            content.add(Box.createVerticalStrut(8));
+
+            CollapsiblePanel categoryPanel = new CollapsiblePanel(typeHeader, categoryContent);
+            categoryPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            panel.add(categoryPanel);
+            panel.add(Box.createVerticalStrut(6));
+        }
+    }
+
+    private void rebuildChallengesPanel(JPanel panel, Map<ChallengeType, List<Challenge>> byType) {
+        panel.removeAll();
+
+        int totalChallenges = plugin.getChallengeRegistry().getAll().size();
+        long validCount = plugin.getChallengeRegistry()
+                .getAll()
+                .stream()
+                .filter(c -> c.isValidWithUnlocks(plugin.getUnlockedIds()))
+                .count();
+
+        JLabel challengesHeader = new JLabel(
+                "Challenges (" + validCount + " / " + totalChallenges + ")"
+        );
+        challengesHeader.setFont(challengesHeader.getFont().deriveFont(Font.BOLD));
+        panel.add(challengesHeader);
+        panel.add(Box.createVerticalStrut(6));
+
+        for (ChallengeType type : ChallengeType.values()) {
+            List<Challenge> list = byType.get(type);
+            if (list == null || list.isEmpty()) {
+                continue;
+            }
+
+            long typeValidCount = list.stream()
+                    .filter(c -> c.isValidWithUnlocks(plugin.getUnlockedIds()))
+                    .count();
+            String typeHeader = type + " (" + typeValidCount + "/" + list.size() + ")";
+
+            JPanel categoryContent = new JPanel();
+            categoryContent.setLayout(new BoxLayout(categoryContent, BoxLayout.Y_AXIS));
+            categoryContent.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+            for (Challenge challenge : list) {
+                boolean meetsRequirements = challenge.isValidWithUnlocks(plugin.getUnlockedIds());
+
+                JPanel row = new JPanel();
+                row.setLayout(new BoxLayout(row, BoxLayout.X_AXIS));
+                row.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+                JLabel textLabel = new JLabel(challenge.getDisplayName());
+                textLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+                if (!meetsRequirements) {
+                    textLabel.setForeground(new Color(170, 60, 60));
+                } else {
+                    textLabel.setForeground(new Color(70, 167, 32));
+                }
+
+                applyTooltipChallenge(textLabel, challenge);
+
+                row.add(textLabel);
+
+                categoryContent.add(row);
+            }
+
+            CollapsiblePanel categoryPanel = new CollapsiblePanel(typeHeader, categoryContent);
+            categoryPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            panel.add(categoryPanel);
+            panel.add(Box.createVerticalStrut(6));
         }
     }
 
@@ -312,12 +412,46 @@ public class RoguelitePanel extends PluginPanel {
                         met = req.isMet(plugin);
                     }
                 } catch (Exception | AssertionError e) {
-                    // Treat as not met if plugin state is not ready
                     met = false;
                 }
 
                 sb.append(met ? "• " : "• <font color='red'>")
-                        .append(req.getDescription())
+                        .append(req.getRequiredUnlockTitle())
+                        .append(met ? "" : "</font>")
+                        .append("<br>");
+            }
+        }
+
+        sb.append("</html>");
+
+        label.setToolTipText(sb.toString());
+    }
+
+    private void applyTooltipChallenge(JLabel label, Challenge challenge) {
+        StringBuilder sb = new StringBuilder("<html>");
+
+        sb.append("<b>")
+                .append(challenge.getDisplayName())
+                .append("</b><br>")
+                .append(challenge.getDescription());
+
+        List<AppearRequirement> reqs = challenge.getRequirements();
+        if (reqs != null && !reqs.isEmpty()) {
+            sb.append("<br><br><b>Requirements:</b><br>");
+
+            for (AppearRequirement req : reqs) {
+                boolean met = false;
+
+                try {
+                    if (plugin != null) {
+                        met = req.isMet(plugin);
+                    }
+                } catch (Exception | AssertionError e) {
+                    met = false;
+                }
+
+                sb.append(met ? "• " : "• <font color='red'>")
+                        .append(req.getRequiredUnlockTitle())
                         .append(met ? "" : "</font>")
                         .append("<br>");
             }
@@ -353,11 +487,63 @@ public class RoguelitePanel extends PluginPanel {
                 Image scaled = img.getScaledInstance(18, 18, Image.SCALE_SMOOTH);
                 return new ImageIcon(scaled);
             } catch (AssertionError e) {
-                // Sprite system not ready yet
                 return null;
             }
         }
 
         return null;
+    }
+
+    /**
+     * Reusable collapsible panel with styled header and content.
+     */
+    private class CollapsiblePanel extends JPanel {
+        private final JButton headerButton;
+        private final JPanel contentPanel;
+        private boolean expanded = false;
+
+        public CollapsiblePanel(String title, JComponent content) {
+            setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+            setAlignmentX(Component.LEFT_ALIGNMENT);
+
+            headerButton = new JButton(title + " ▸");
+            headerButton.setMargin(new Insets(8, 12, 8, 12));
+            headerButton.setFont(headerButton.getFont().deriveFont(13f));
+            headerButton.setPreferredSize(new Dimension(Integer.MAX_VALUE, 36));
+            headerButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
+            headerButton.setAlignmentX(Component.LEFT_ALIGNMENT);
+            headerButton.setHorizontalAlignment(SwingConstants.LEFT);
+            headerButton.setFocusPainted(false);
+
+            contentPanel = new JPanel();
+            contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+            contentPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            contentPanel.setBorder(BorderFactory.createEmptyBorder(6, 12, 6, 0));
+            contentPanel.setVisible(false);
+
+            contentPanel.add(content);
+
+            headerButton.addActionListener(e -> toggle());
+
+            add(headerButton);
+            add(contentPanel);
+        }
+
+        private void toggle() {
+            expanded = !expanded;
+            contentPanel.setVisible(expanded);
+            updateHeaderText();
+            revalidate();
+            repaint();
+        }
+
+        private void updateHeaderText() {
+            String text = headerButton.getText();
+            if (text.endsWith(" ▸")) {
+                headerButton.setText(text.substring(0, text.length() - 2) + " ▾");
+            } else if (text.endsWith(" ▾")) {
+                headerButton.setText(text.substring(0, text.length() - 2) + " ▸");
+            }
+        }
     }
 }

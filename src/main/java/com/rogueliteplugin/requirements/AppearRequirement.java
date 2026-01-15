@@ -14,5 +14,5 @@ public interface AppearRequirement
         return isMet(plugin.getUnlockedIds());
     }
 
-    String getDescription();
+    String getRequiredUnlockTitle();
 }

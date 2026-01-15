@@ -28,7 +28,7 @@ public class SkillLevelRequirement implements AppearRequirement {
     }
 
     @Override
-    public String getDescription() {
+    public String getRequiredUnlockTitle() {
         return skill.getName() + " level " + level;
     }
 }

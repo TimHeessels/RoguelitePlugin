@@ -41,7 +41,7 @@ public class UnlockPackOption implements PackOption {
 
     @Override
     public String getChallengeName() {
-        return challenge.getChallengeName();
+        return challenge.getDisplayName();
     }
 
     @Override

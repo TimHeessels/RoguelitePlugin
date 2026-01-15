@@ -1,17 +1,20 @@
 package com.rogueliteplugin.requirements;
 
 import com.rogueliteplugin.RoguelitePlugin;
-import com.rogueliteplugin.challenge.ChallengeContext;
+import com.rogueliteplugin.challenge.ChallengeRegistry;
+import com.rogueliteplugin.unlocks.UnlockRegistry;
 
 import java.util.Set;
 
 public class RequiresUnlockRequirement implements AppearRequirement
 {
     private final String requiredUnlockId;
+    private final UnlockRegistry unlockRegistry;
 
-    public RequiresUnlockRequirement(String requiredUnlockId)
+    public RequiresUnlockRequirement(String requiredUnlockId, UnlockRegistry unlockRegistry)
     {
         this.requiredUnlockId = requiredUnlockId;
+        this.unlockRegistry = unlockRegistry;
     }
 
     @Override
@@ -21,9 +24,17 @@ public class RequiresUnlockRequirement implements AppearRequirement
     }
 
     @Override
-    public String getDescription()
+    public String getRequiredUnlockTitle()
     {
-        return "Requires " + requiredUnlockId;
+        String displayName = requiredUnlockId;
+        if (unlockRegistry != null) {
+            var unlock = unlockRegistry.getAll().stream()
+                    .filter(u -> u.getId().equals(requiredUnlockId))
+                    .findFirst();
+            if (unlock.isPresent()) {
+                displayName = unlock.get().getDisplayName();
+            }
+        }
+        return "Requires " + displayName;
     }
 }
-

@@ -1,5 +1,4 @@
 package com.rogueliteplugin.unlocks;
-import javax.swing.Icon;
 
 public class ShopUnlock implements Unlock
 {
@@ -19,7 +18,7 @@ public class ShopUnlock implements Unlock
     @Override
     public UnlockType getType()
     {
-        return UnlockType.SHOP;
+        return UnlockType.Shops;
     }
 
     @Override

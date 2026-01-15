@@ -1,12 +1,6 @@
 package com.rogueliteplugin.challenge;
 
-import com.rogueliteplugin.requirements.AppearRequirement;
 import net.runelite.api.coords.WorldPoint;
-import net.runelite.client.events.ServerNpcLoot;
-import net.runelite.client.game.ItemManager;
-import net.runelite.client.game.ItemStack;
-
-import java.util.List;
 
 public class WalkChallenge implements Challenge {
     private final String id;
@@ -28,7 +22,7 @@ public class WalkChallenge implements Challenge {
 
     @Override
     public ChallengeType getType() {
-        return ChallengeType.UNIQUE;
+        return ChallengeType.Unique;
     }
 
     @Override
@@ -37,7 +31,7 @@ public class WalkChallenge implements Challenge {
     }
 
     @Override
-    public String getChallengeName() {
+    public String getDisplayName() {
         return name;
     }
 

@@ -1,8 +1,5 @@
 package com.rogueliteplugin.challenge;
 
-import net.runelite.api.Skill;
-import net.runelite.api.events.HitsplatApplied;
-
 public class OneHpAfterDamageChallenge implements Challenge
 {
     private final String id;
@@ -21,7 +18,7 @@ public class OneHpAfterDamageChallenge implements Challenge
 
     @Override
     public ChallengeType getType() {
-        return ChallengeType.UNIQUE;
+        return ChallengeType.Unique;
     }
 
     @Override
@@ -31,7 +28,7 @@ public class OneHpAfterDamageChallenge implements Challenge
     }
 
     @Override
-    public String getChallengeName()
+    public String getDisplayName()
     {
         return name;
     }

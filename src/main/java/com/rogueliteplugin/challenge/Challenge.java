@@ -11,7 +11,7 @@ public interface Challenge
 {
     ChallengeType getType();
     String getId();
-    String getChallengeName();
+    String getDisplayName();
     String getDescription();
     Integer getLowAmount();
     Integer getHighAmount();
