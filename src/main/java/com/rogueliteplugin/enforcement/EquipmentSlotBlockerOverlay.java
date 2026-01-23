@@ -14,7 +14,7 @@ import net.runelite.api.widgets.*;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.game.ItemManager;
 
-public class EquipmentSlotBlocker {
+public class EquipmentSlotBlockerOverlay {
     private static final int LOCK_SPRITE_ID = 1342; // padlock icon
     private static final int LOCK_ICON_CHILD_ID = 1001;
     private static final int GRAY_OVERLAY_CHILD_ID = 998;
@@ -90,29 +90,12 @@ public class EquipmentSlotBlocker {
         if (children == null)
             return;
 
-        // Debug: Print all available children
-        plugin.Debug("Total children: " + children.length);
-        for (int i = 0; i < children.length; i++) {
-            if (children[i] != null) {
-                plugin.Debug("Child " + i + ": " + children[i].getName() + " - " + children[i]);
-            }
-        }
-        plugin.Debug("Total children: " + children.length);
-        for (int i = 0; i < children.length; i++) {
-            if (children[i] != null) {
-                Widget w = children[i];
-                plugin.Debug("Child " + i + ": type=" + w.getType() + " name='" + w.getName()
-                        + "' children=" + (w.getStaticChildren() != null ? w.getStaticChildren().length : 0));
-            }
-        }
-
         for (UnlockEquipslot.EquipSlot slot : EQUIP_SLOTS) {
             Integer idx = SLOT_INDEX.get(slot);
             if (idx == null || idx >= children.length)
                 continue;
 
             Widget slotWidget = children[idx];
-            plugin.Debug("Applying overlay to slot " + slot + " at index " + idx);
             applyGrayOverlay(slotWidget, slot);
         }
     }

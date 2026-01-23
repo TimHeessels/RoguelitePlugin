@@ -1,4 +1,4 @@
-package com.rogueliteplugin.enforcement;
+package com.rogueliteplugin.data;
 
 import java.util.Arrays;
 

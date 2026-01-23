@@ -1,12 +1,12 @@
 package com.rogueliteplugin.unlocks;
 
 import com.rogueliteplugin.RoguelitePlugin;
-import com.rogueliteplugin.enforcement.ShopCategory;
+import com.rogueliteplugin.data.ClueTier;
+import com.rogueliteplugin.data.ShopCategory;
 import com.rogueliteplugin.requirements.AppearRequirement;
 import com.rogueliteplugin.requirements.CombatRequirement;
 import com.rogueliteplugin.requirements.UnlockIDRequirement;
 import net.runelite.api.Skill;
-import net.runelite.api.SpriteID;
 import net.runelite.client.game.SkillIconManager;
 
 import java.awt.image.BufferedImage;
@@ -78,6 +78,7 @@ public final class UnlockDefinitions {
         String[][] defs = {
                 {"FairyRings", "Fairy Rings"},
                 {"SpiritTrees", "Spirit Trees"},
+                {"SpelbookTeleports", "Teleport Tablets"},
                 {"TeleportTablets", "Teleport Tablets"},
                 {"MinigameTeleports", "Minigame Teleports"},
                 {"CharterShips", "Charter Ships"},
@@ -104,8 +105,20 @@ public final class UnlockDefinitions {
     ) {
         for (Skill skill : Skill.values()) {
             BufferedImage img = skillIconManager.getSkillImage(skill);
+
+            List<AppearRequirement> reqs = new ArrayList<>();
+
+            switch (skill) {
+                case SAILING: //Needs pandemonium quest, which released in 2025.
+                    reqs.add(new UnlockIDRequirement("Quests2025", registry));
+                    break;
+                case HERBLORE: //Needs druidic ritual quest, which released in 2002.
+                    reqs.add(new UnlockIDRequirement("Quests2002", registry));
+                    break;
+            }
+
             if (img != null) {
-                registry.register(new SkillUnlock(skill, skillIconManager));
+                registry.register(new SkillUnlock(skill, skillIconManager,reqs));
             }
         }
     }
@@ -136,7 +149,7 @@ public final class UnlockDefinitions {
         int[] QUEST_YEARS = {
                 2001, 2002, 2003, 2004, 2005, 2006, 2007,
                 2016, 2017, 2018, 2019, 2020,
-                2021, 2022, 2023, 2024
+                2021, 2022, 2023, 2024, 2025 //Add 2026 when next quest is released
         };
         Integer previousYear = null;
 
@@ -212,8 +225,7 @@ public final class UnlockDefinitions {
     }
 
     private static void registerShops(UnlockRegistry registry, RoguelitePlugin plugin) {
-        for (ShopCategory category : ShopCategory.values())
-        {
+        for (ShopCategory category : ShopCategory.values()) {
             registry.register(new ShopUnlock(
                     category.name(), // unlock ID
                     category.getDisplayName(),

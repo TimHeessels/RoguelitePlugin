@@ -1,5 +1,6 @@
 package com.rogueliteplugin.challenge;
 
+import com.rogueliteplugin.data.ChallengeType;
 import net.runelite.api.coords.WorldPoint;
 
 public class WalkChallenge implements Challenge {

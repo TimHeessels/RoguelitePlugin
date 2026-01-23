@@ -1,5 +1,5 @@
 package com.rogueliteplugin.unlocks;
-import com.rogueliteplugin.RoguelitePlugin;
+import com.rogueliteplugin.data.UnlockType;
 import com.rogueliteplugin.requirements.AppearRequirement;
 import javax.swing.*;
 import java.util.List;

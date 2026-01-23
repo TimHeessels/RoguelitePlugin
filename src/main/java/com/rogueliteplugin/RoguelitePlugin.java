@@ -8,8 +8,11 @@ import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import com.rogueliteplugin.data.ChallengeType;
+import com.rogueliteplugin.data.PackChoiceState;
 import com.google.inject.Provides;
 import com.rogueliteplugin.challenge.*;
+import com.rogueliteplugin.data.UnlockType;
 import com.rogueliteplugin.enforcement.*;
 import com.rogueliteplugin.pack.PackOption;
 import com.rogueliteplugin.pack.UnlockPackOption;
@@ -18,9 +21,6 @@ import com.rogueliteplugin.unlocks.*;
 import net.runelite.api.*;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.*;
-import net.runelite.api.gameval.InterfaceID;
-import net.runelite.api.widgets.Widget;
-import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.callback.ClientThread;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.eventbus.EventBus;
@@ -37,6 +37,7 @@ import net.runelite.client.game.SpriteManager;
 
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.ClientToolbar;
+import net.runelite.client.ui.overlay.tooltip.TooltipManager;
 import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.Text;
 import net.runelite.http.api.item.ItemEquipmentStats;
@@ -80,7 +81,7 @@ public class RoguelitePlugin extends Plugin {
     private QuestBlocker questBlocker;
 
     @Inject
-    private EquipmentSlotBlocker equipmentSlotBlocker;
+    private EquipmentSlotBlockerOverlay equipmentSlotBlocker;
 
     @Inject
     private ShopBlocker shopBlocker;
@@ -103,7 +104,19 @@ public class RoguelitePlugin extends Plugin {
     private final RogueliteInfoboxOverlay overlay = new RogueliteInfoboxOverlay(this);
 
     @Inject
-    private InventorySlotPanel inventoryBlockOverlay;
+    private InventorySlotPanelOverlay inventoryBlockOverlay; //Old system
+
+    @Inject
+    private InventoryBlocker inventoryBlocker;
+
+    @Inject
+    private TransportBlocker teleportBlocker;
+
+    @Inject
+    private InventoryFillerTooltip inventoryFillerTooltip;
+
+    @Inject
+    private TooltipManager tooltipManager;
 
     @Inject
     private ClientToolbar clientToolbar;
@@ -159,13 +172,18 @@ public class RoguelitePlugin extends Plugin {
 
         //Load current challenge state
         challengeManager.loadFromConfig(config, client, challengeRegistry);
+        Debug("Challenge progress: "+challengeManager.getCurrent().getProgress());
+        Debug("Challenge goal: "+challengeManager.getCurrent().getGoal());
 
         overlayManager.add(overlay);
-        overlayManager.add(inventoryBlockOverlay);
+        //overlayManager.add(inventoryBlockOverlay);
         eventBus.register(skillBlocker);
         eventBus.register(questBlocker);
         eventBus.register(equipmentSlotBlocker);
         eventBus.register(shopBlocker);
+        eventBus.register(inventoryBlocker);
+        eventBus.register(teleportBlocker);
+        overlayManager.add(inventoryFillerTooltip);
 
         loadUnlocked();
 
@@ -190,11 +208,16 @@ public class RoguelitePlugin extends Plugin {
         log.debug("Roguelite plugin stopped!");
         previousXp.clear();
         overlayManager.remove(overlay);
-        overlayManager.remove(inventoryBlockOverlay);
+        //overlayManager.remove(inventoryBlockOverlay);
         eventBus.unregister(skillBlocker);
         eventBus.unregister(questBlocker);
         eventBus.unregister(equipmentSlotBlocker);
         eventBus.unregister(shopBlocker);
+        eventBus.unregister(inventoryBlocker);
+        eventBus.unregister(teleportBlocker);
+        overlayManager.remove(inventoryFillerTooltip);
+        //clientThread.invoke(inventoryBlocker::redrawInventory);
+
         skillBlocker.clearAll();
         equipmentSlotBlocker.clearAll();
         clientToolbar.removeNavigation(navButton);
@@ -209,11 +232,7 @@ public class RoguelitePlugin extends Plugin {
 
         skillBlocker.refreshAll();
         equipmentSlotBlocker.refreshAll();
-
-        if (panel != null) {
-            Debug("Refreshing panel due to config change");
-            panel.refresh();
-        }
+        clientThread.invoke(inventoryBlocker::redrawInventory);
     }
 
     @Subscribe
@@ -268,6 +287,7 @@ public class RoguelitePlugin extends Plugin {
 
     private static final int EXPECTED_SKILL_COUNT = 23;
     public boolean statsInitialized = false;
+
     @Subscribe
     public void onStatChanged(StatChanged event) {
         Skill skill = event.getSkill();
@@ -275,9 +295,8 @@ public class RoguelitePlugin extends Plugin {
         int xp = event.getXp();
         Integer previous = previousXp.put(skill, xp);
 
-        Debug(xp + " xp gained in " + skill.getName() + " size: "+previousXp.size());
-        if (!statsInitialized && previousXp.size() >= EXPECTED_SKILL_COUNT)
-        {
+        Debug(xp + " xp gained in " + skill.getName() + " size: " + previousXp.size());
+        if (!statsInitialized && previousXp.size() >= EXPECTED_SKILL_COUNT) {
             statsInitialized = true;
             if (panel != null) {
                 Debug("Refreshing panel due to login");
@@ -327,9 +346,11 @@ public class RoguelitePlugin extends Plugin {
 
     @Subscribe
     public void onWidgetLoaded(WidgetLoaded event) {
+        /*
         if (event.getGroupId() == InterfaceID.INVENTORY) {
             overlayManager.resetOverlay(inventoryBlockOverlay);
         }
+         */
     }
 
     @Subscribe
@@ -348,7 +369,8 @@ public class RoguelitePlugin extends Plugin {
         if (!(challenge instanceof CheckForSpamchatChallenge))
             return;
 
-        if (Objects.equals(chatMessage.getMessage(), ((CheckForSpamchatChallenge) challenge).getSpamMessage()))
+        String pattern = ((CheckForSpamchatChallenge) challenge).getSpamMessage();
+        if (chatMessage.getMessage().matches(pattern))
             challengeManager.increment(1);
     }
 
@@ -389,7 +411,7 @@ public class RoguelitePlugin extends Plugin {
         });
     }
 
-    public void onPackOptionSelected(PackOption option) {
+    public void onPackOptionSelected(PackOption option, int balancedAmount) {
         clientThread.invoke(() ->
         {
             Unlock unlock = ((UnlockPackOption) option).getUnlock();
@@ -397,7 +419,7 @@ public class RoguelitePlugin extends Plugin {
             if (unlock instanceof CurrencyUnlock) {
                 ((CurrencyUnlock) unlock).grant(this);
             } else {
-                option.onChosen(this);
+                option.onChosen(this,balancedAmount);
             }
 
             packChoiceState = PackChoiceState.NONE;
@@ -426,7 +448,7 @@ public class RoguelitePlugin extends Plugin {
 
         for (AppearRequirement req : reqs) {
             try {
-                if (!req.isMet(this,this.getUnlockedIds())) {
+                if (!req.isMet(this, this.getUnlockedIds())) {
                     return false;
                 }
             } catch (Exception e) {
@@ -497,8 +519,36 @@ public class RoguelitePlugin extends Plugin {
         }
     }
 
-    public void setActiveChallenge(Challenge activeChallenge) {
-        challengeManager.startChallenge(activeChallenge, getBalancedChallengeAmount(activeChallenge.getLowAmount(), activeChallenge.getHighAmount()));
+    public String removeRandomUnlock() {
+        if (unlockedIds.isEmpty()) {
+            return null;
+        }
+
+        // Convert to list to enable random selection
+        List<String> unlockList = new ArrayList<>(unlockedIds);
+
+        // Pick random unlock
+        String randomUnlockId = unlockList.get(random.nextInt(unlockList.size()));
+
+        // Remove it
+        unlockedIds.remove(randomUnlockId);
+        saveUnlocked();
+
+        // Refresh UI and blockers
+        skillBlocker.refreshAll();
+        equipmentSlotBlocker.refreshAll();
+
+        if (panel != null) {
+            panel.refresh();
+        }
+
+        // Get the unlock's display name
+        Unlock unlock = unlockRegistry.get(randomUnlockId);
+        return unlock != null ? unlock.getDisplayName() : randomUnlockId;
+    }
+
+    public void setActiveChallenge(Challenge activeChallenge,int balancedAmount) {
+        challengeManager.startChallenge(activeChallenge, balancedAmount);
     }
 
     public String getCurrentChallengeFormatted() {
@@ -537,7 +587,7 @@ public class RoguelitePlugin extends Plugin {
                     hypotheticalUnlocks.add(unlock.getId());
 
                     List<Challenge> validChallenges = challengeRegistry.getAll().stream()
-                            .filter(c -> c.isValidWithUnlocks(this,hypotheticalUnlocks))
+                            .filter(c -> c.isValidWithUnlocks(this, hypotheticalUnlocks))
                             .collect(Collectors.toList());
 
                     for (int j = 0; j < validChallenges.size(); j++) {
@@ -630,7 +680,7 @@ public class RoguelitePlugin extends Plugin {
         return config.skipTokens();
     }
 
-    public void addSkipTokens(int amount) {
+    public void addChallengeSkipTokens(int amount) {
         config.skipTokens(config.skipTokens() + amount);
         if (panel != null) {
             panel.refresh();
@@ -642,6 +692,25 @@ public class RoguelitePlugin extends Plugin {
             Debug("Bought challenge skip");
             config.skipTokens(config.skipTokens() - 1);
             Debug("Bought reroll, new token amount: " + config.skipTokens());
+            challengeManager.CompleteGoal();
+            ShowPluginChat("<col=ff0000><b>Challenge skipped! </b></col> You used a skip-token to skip the current challenge.", false);
+            if (panel != null) {
+                panel.refresh();
+            }
+        });
+    }
+
+    public void ForfeitChallenge() {
+        clientThread.invokeLater(() -> {
+            Debug("Forfeit challenge");
+
+            String removedUnlock = removeRandomUnlock();
+            if (removedUnlock != null) {
+                ShowPluginChat("<col=ff0000><b>Challenge skipped! </b></col> You have forfeited your current challenge and lost the unlock: " + removedUnlock, false);
+            } else {
+                showChatMessage("You have forfeited your current challenge but had no unlocks left to lose.");
+                ShowPluginChat("<col=ff0000><b>Challenge skipped! </b></col> You have forfeited your current challenge but had no unlocks left to lose.", false);
+            }
             challengeManager.CompleteGoal();
             if (panel != null) {
                 panel.refresh();
@@ -667,13 +736,13 @@ public class RoguelitePlugin extends Plugin {
         Debug("Mouseclick option: " + option);
 
         if (EAT_MENU_OPTIONS.contains(option) && !isUnlocked("Food")) {
-            ShowBlockedActionChat("You haven't unlocked the ability to eat food yet!");
+            ShowPluginChat("<col=ff0000><b>Eating food locked!</b></col> You haven't unlocked the ability to eat food yet!", true);
             event.consume();
             return;
         }
 
         if (POTIONS_MENU_OPTIONS.contains(option) && !isUnlocked("Potions")) {
-            ShowBlockedActionChat("You haven't unlocked the ability to drink potions yet!");
+            ShowPluginChat("<col=ff0000><b>Drinking potions locked!</b></col> You haven't unlocked the ability to drink potions yet!", true);
             event.consume();
         }
     }
@@ -701,28 +770,19 @@ public class RoguelitePlugin extends Plugin {
         }
 
         if (!isUnlocked("EQUIP_" + slot)) {
-            ShowBlockedActionChat(slot.getDisplayName() + " is not unlocked yet.");
+            ShowPluginChat("<col=ff0000><b>Possibly locked!</b></col>" + slot.getDisplayName() + " is not unlocked yet.", true);
             event.consume();
         }
     }
 
-    public void ShowBlockedActionChat(String message) {
+    public void ShowPluginChat(String message, boolean isError) {
         client.addChatMessage(
                 ChatMessageType.ENGINE,
                 "",
-                "<col=ff0000><b>Locked!</b></col> " + message,
+                "[<col=6069df>Roguelite Mode</col>] " + message,
                 null
         );
-        client.playSoundEffect(2394);
-    }
-
-    public void ShowPossibleBlockedActionChat(String message) {
-        client.addChatMessage(
-                ChatMessageType.ENGINE,
-                "",
-                "<col=ff0000><b>Possibly locked!</b></col> " + message,
-                null
-        );
-        client.playSoundEffect(2394);
+        if (isError)
+            client.playSoundEffect(2394);
     }
 }

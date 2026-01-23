@@ -1,5 +1,6 @@
 package com.rogueliteplugin.challenge;
 
+import com.rogueliteplugin.data.ChallengeType;
 import com.rogueliteplugin.requirements.AppearRequirement;
 import net.runelite.client.events.ServerNpcLoot;
 import net.runelite.client.game.ItemManager;

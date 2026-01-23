@@ -1,5 +1,6 @@
 package com.rogueliteplugin.challenge;
 
+import com.rogueliteplugin.data.ChallengeType;
 import com.rogueliteplugin.requirements.AppearRequirement;
 import net.runelite.api.Skill;
 import net.runelite.api.events.StatChanged;
@@ -28,7 +29,7 @@ public class SkillXPChallenge implements Challenge {
 
     @Override
     public ChallengeType getType() {
-        return ChallengeType.Skill;
+        return ChallengeType.Cooking;
     }
 
     @Override

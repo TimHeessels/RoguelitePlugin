@@ -1,5 +1,7 @@
 package com.rogueliteplugin.challenge;
 
+import com.rogueliteplugin.data.ChallengeType;
+
 public class OneHpAfterDamageChallenge implements Challenge
 {
     private final String id;

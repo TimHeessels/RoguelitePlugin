@@ -1,10 +1,9 @@
 package com.rogueliteplugin.unlocks;
 
 import com.rogueliteplugin.RoguelitePlugin;
+import com.rogueliteplugin.data.UnlockType;
 
 import javax.swing.*;
-import java.awt.image.BufferedImage;
-import java.util.List;
 
 public class CurrencyUnlock implements Unlock {
     public enum CurrencyType {
@@ -59,7 +58,7 @@ public class CurrencyUnlock implements Unlock {
                 plugin.addRerollTokens(amount);
                 break;
             case SKIP:
-                plugin.addSkipTokens(amount);
+                plugin.addChallengeSkipTokens(amount);
                 break;
         }
     }

@@ -50,8 +50,8 @@ public class UnlockPackOption implements PackOption {
     }
 
     @Override
-    public void onChosen(RoguelitePlugin plugin) {
-        plugin.setActiveChallenge(challenge);
+    public void onChosen(RoguelitePlugin plugin, int balancedAmount) {
+        plugin.setActiveChallenge(challenge,balancedAmount);
         plugin.unlock(unlock.getId());
     }
 }

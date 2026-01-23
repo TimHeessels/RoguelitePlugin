@@ -1,5 +1,6 @@
 package com.rogueliteplugin.enforcement;
 
+import com.rogueliteplugin.data.ShopCategory;
 import com.google.inject.Inject;
 import com.rogueliteplugin.RoguelitePlugin;
 import lombok.extern.slf4j.Slf4j;
@@ -38,8 +39,7 @@ public class ShopBlocker {
 
         if (category == null) {
             // Unknown shop → allow
-            plugin.ShowPossibleBlockedActionChat("Shop category not recognized by plugin.");
-            plugin.ShowPossibleBlockedActionChat("Check for yourself if this is unlocked.");
+            plugin.ShowPluginChat("<col=ff0000><b>Possibly locked!</b></col> Shop category not recognized by plugin. Check for yourself if this is unlocked.", false);
             return;
         }
 
@@ -47,7 +47,6 @@ public class ShopBlocker {
             blockShop(category);
         }
     }
-
 
     // ----------------------------------------------------
     // Helpers
@@ -69,6 +68,6 @@ public class ShopBlocker {
     }
 
     private void blockShop(ShopCategory category) {
-        plugin.ShowBlockedActionChat("You have not unlocked access to this shop yet.");
+        plugin.ShowPluginChat("<col=ff0000><b>Shop locked!</b></col> You have not unlocked access to this shop yet.", true);
     }
 }

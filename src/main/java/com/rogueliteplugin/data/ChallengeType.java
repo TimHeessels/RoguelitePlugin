@@ -1,8 +1,8 @@
-package com.rogueliteplugin.challenge;
+package com.rogueliteplugin.data;
 
 public enum ChallengeType {
     Combat,
-    Skill,
+    Cooking,
     Drops,
     Unique
 }

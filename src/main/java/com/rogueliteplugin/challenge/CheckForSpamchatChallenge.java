@@ -1,9 +1,9 @@
 package com.rogueliteplugin.challenge;
 
+import com.rogueliteplugin.data.ChallengeType;
 import com.rogueliteplugin.requirements.AppearRequirement;
 
 import java.util.List;
-import java.util.Set;
 
 public class CheckForSpamchatChallenge implements Challenge {
     private final String id;

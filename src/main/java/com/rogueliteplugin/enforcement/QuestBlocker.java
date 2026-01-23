@@ -3,6 +3,7 @@ package com.rogueliteplugin.enforcement;
 import com.google.inject.Inject;
 import com.rogueliteplugin.RoguelitePlugin;
 import net.runelite.api.Client;
+import net.runelite.api.Quest;
 import net.runelite.api.ScriptID;
 import net.runelite.api.events.ScriptPostFired;
 import net.runelite.api.widgets.*;
@@ -10,7 +11,8 @@ import net.runelite.client.callback.ClientThread;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.util.Text;
 
-import static com.rogueliteplugin.QuestYearList.QUEST_YEAR;
+import static com.rogueliteplugin.data.QuestYearList.QUEST_BY_NAME;
+import static com.rogueliteplugin.data.QuestYearList.QUEST_YEAR;
 
 public class QuestBlocker {
 
@@ -70,19 +72,16 @@ public class QuestBlocker {
         }
 
         for (Widget entry : entries) {
-            plugin.Debug("entry: " + entry);
             if (entry == null || entry.getType() != WidgetType.TEXT) {
                 continue;
             }
 
             String text = entry.getText();
-            plugin.Debug("Quest text: " + text);
             if (text == null || text.isEmpty()) {
                 continue;
             }
 
             String clean = Text.removeTags(text).trim();
-            plugin.Debug("clean: " + text);
 
             // Skip headers like "--- Free Quests ---"
             if (clean.startsWith("-")) {
@@ -101,7 +100,7 @@ public class QuestBlocker {
             if (questYear == null)
                 continue;
 
-            boolean unlocked = plugin.isUnlocked("Quests"+questYear);
+            boolean unlocked = plugin.isUnlocked("Quests" + questYear);
 
             String displayText;
             if (unlocked)
@@ -116,6 +115,7 @@ public class QuestBlocker {
 
     private String getQuestYear(String questName)
     {
-        return QUEST_YEAR.getOrDefault(questName, null);
+        Quest quest = QUEST_BY_NAME.get(questName);
+        return quest == null ? null : QUEST_YEAR.get(quest);
     }
 }

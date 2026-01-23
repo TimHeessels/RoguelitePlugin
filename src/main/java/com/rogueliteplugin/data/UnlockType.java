@@ -1,4 +1,4 @@
-package com.rogueliteplugin.unlocks;
+package com.rogueliteplugin.data;
 
 public enum UnlockType
 {

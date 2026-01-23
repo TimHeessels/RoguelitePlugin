@@ -1,15 +1,19 @@
 package com.rogueliteplugin;
 
+import com.rogueliteplugin.data.PackChoiceState;
+import com.rogueliteplugin.data.UnlockType;
 import com.rogueliteplugin.pack.PackOption;
 import com.rogueliteplugin.pack.UnlockPackOption;
 import com.rogueliteplugin.requirements.AppearRequirement;
 import com.rogueliteplugin.ui.PackOptionButton;
 import com.rogueliteplugin.unlocks.*;
 import com.rogueliteplugin.challenge.Challenge;
-import com.rogueliteplugin.challenge.ChallengeType;
+import com.rogueliteplugin.data.ChallengeType;
 import net.runelite.client.ui.PluginPanel;
 import net.runelite.api.Client;
 import com.google.inject.Inject;
+
+import javax.swing.JOptionPane;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -119,9 +123,9 @@ public class RoguelitePanel extends PluginPanel {
 
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
 
-        if (!plugin.statsInitialized)
-        {
-            content.add(new JLabel("Please login to see your roguelite progress."));
+        if (!plugin.statsInitialized) {
+            content.add(new JLabel("Please login to see"));
+            content.add(new JLabel("your roguelite progress."));
             revalidate();
             repaint();
             return;
@@ -137,11 +141,22 @@ public class RoguelitePanel extends PluginPanel {
             content.add(Box.createVerticalStrut(15));
         }
 
-        //Skip current challenge button
         if (plugin.getPackChoiceState() == PackChoiceState.NONE && plugin.anyChallengeActive()) {
+            //Forfeit current challenge button
+            content.add(createActionButton("<html>Forfeit current challenge<br>Removes a random unlock!</html>",
+                    true, "/icons/challenge/forfeit.png", e -> showConfirmationDialog(
+                            "Are you sure you want to skip this challenge without using skip-tokens? This WILL remove a random unlock!",
+                            "Confirm Challenge Skip",
+                            plugin::ForfeitChallenge)));
+            content.add(Box.createVerticalStrut(15));
+
+            //Skip current challenge button
             boolean skipChallengeButtonActive = plugin.getSkipTokens() > 0;
             content.add(createActionButton("<html>Skip current challenge<br>(You have " + plugin.getSkipTokens() + " skip tokens)</html>",
-                    skipChallengeButtonActive, "/icons/currency/skip.png", e -> plugin.UseChallengeSkipToken()));
+                    skipChallengeButtonActive, "/icons/currency/skip.png", e -> showConfirmationDialog(
+                            "Are you sure you want to skip this challenge using a skip-token? This will NOT remove a random unlock.",
+                            "Confirm Challenge Skip",
+                            plugin::UseChallengeSkipToken)));
             content.add(Box.createVerticalStrut(15));
         }
 
@@ -149,7 +164,10 @@ public class RoguelitePanel extends PluginPanel {
         if (plugin.getPackChoiceState() == PackChoiceState.CHOOSING) {
             boolean rerollButtonActive = plugin.getRerollTokens() > 0;
             content.add(createActionButton("<html>Reroll pack options<br>(You have " + plugin.getRerollTokens() + " skip tokens)</html>",
-                    rerollButtonActive, "/icons/currency/reroll.png", e -> plugin.useRerollToken()));
+                    rerollButtonActive, "/icons/currency/reroll.png", e -> showConfirmationDialog(
+                            "Are you sure you want to reroll the current challenge options using a reroll-token?",
+                            "Confirm Challenge Skip",
+                            plugin::useRerollToken)));
             content.add(Box.createVerticalStrut(15));
         }
 
@@ -179,7 +197,7 @@ public class RoguelitePanel extends PluginPanel {
                 button.setMaximumSize(
                         new Dimension(Integer.MAX_VALUE, button.getPreferredSize().height)
                 );
-                button.addActionListener(e -> plugin.onPackOptionSelected(option));
+                button.addActionListener(e -> plugin.onPackOptionSelected(option,balancedAmount));
 
                 optionButtons.add(button);
                 content.add(button);
@@ -191,10 +209,26 @@ public class RoguelitePanel extends PluginPanel {
 
         // Always show rules panel
         String rulesHtml = "<html>"
-                + "<b>Rules</b><br>"
-                + "• Complete the active challenge to open a booster pack.<br>"
-                + "• Packs contain cards that unlock a range of content, see the list on this page to see what you have access to.<br>"
-                + "• Each card also contains a new challenge you need to complete for the next pack, so pick wisely.<br>"
+                + "<b>Booster pack rules</b><br>"
+                + "Complete the active challenge to open a booster pack.<br>"
+                + "Packs contain cards that each contain a single unlock as well as the next challenge you need to complete<br>" +
+                "  see the list on this page to see what you currently have access to.<br>"
+                + "You can only pick one of the four cards, so pick wisely.<br>"
+                + "If for some reason you cannot complete a challenge you've picked, you can either forfeit the challenge, " +
+                "  which removes one random unlock, or use a skip token (which you can get during the game-mode).<br><br>"
+                + "<b>Core rules</b><br>"
+                + "You can only perform actions that are not currently locked by the game mode, at the start of the game you cannot:<br>"
+                + "• Gain XP in any skill. (Hitpoints is unlocked at the start)<br>"
+                + "• Complete quests. You unlock quests per year, starting at 2002.<br>"
+                + "• Equip items. You unlock each slot seperatly.<br>"
+                + "• Buy or sell items from shopkeepers. You unlock them per shop type (E.G Platebody shops unlock all shops with platebody icon)<br>"
+                + "• Minigames. Allow you to participate and gain rewards in specific minigames.<br>"
+                + "• Opening clue boxes. (Note, you're allowed to complete the clue scroll, just not open the casket.)<br>"
+                + "• Bosses. Allow you to kill a specific boss.<br>"
+                + "• Transport options. Allow you to use transport methods like fairy rings or teleport spells.<br><br>"
+                + "<b>Tips</b><br>"
+                + "• Combat is off-limits until you unlock at least one combat skill. Hitpoints are unlocked at the start.<br>"
+                + "• More challenge types will appear on cards as you progress. Check the challenge list to see what's in store.<br>"
                 + "</html>";
 
         rulesPanel = new
@@ -225,7 +259,21 @@ public class RoguelitePanel extends PluginPanel {
         repaint();
     }
 
-    // Java
+    private void showConfirmationDialog(String message, String title, Runnable onConfirm) {
+        SwingUtilities.invokeLater(() -> {
+            final int result = JOptionPane.showConfirmDialog(
+                    null,
+                    message,
+                    title,
+                    JOptionPane.OK_CANCEL_OPTION
+            );
+
+            if (result == JOptionPane.OK_OPTION) {
+                onConfirm.run();
+            }
+        });
+    }
+
     private JButton createActionButton(String htmlText,
                                        boolean enabled,
                                        String iconResourcePath,
@@ -401,7 +449,7 @@ public class RoguelitePanel extends PluginPanel {
         long validCount = plugin.getChallengeRegistry()
                 .getAll()
                 .stream()
-                .filter(c -> c.isValidWithUnlocks(plugin,plugin.getUnlockedIds()))
+                .filter(c -> c.isValidWithUnlocks(plugin, plugin.getUnlockedIds()))
                 .count();
 
         JLabel challengesHeader = new JLabel(
@@ -418,7 +466,7 @@ public class RoguelitePanel extends PluginPanel {
             }
 
             long typeValidCount = list.stream()
-                    .filter(c -> c.isValidWithUnlocks(plugin,plugin.getUnlockedIds()))
+                    .filter(c -> c.isValidWithUnlocks(plugin, plugin.getUnlockedIds()))
                     .count();
             String typeHeader = type + " (" + typeValidCount + "/" + list.size() + ")";
 
@@ -427,7 +475,7 @@ public class RoguelitePanel extends PluginPanel {
             categoryContent.setAlignmentX(Component.LEFT_ALIGNMENT);
 
             for (Challenge challenge : list) {
-                boolean meetsRequirements = challenge.isValidWithUnlocks(plugin,plugin.getUnlockedIds());
+                boolean meetsRequirements = challenge.isValidWithUnlocks(plugin, plugin.getUnlockedIds());
 
                 JPanel row = new JPanel();
                 row.setLayout(new BoxLayout(row, BoxLayout.X_AXIS));
@@ -474,7 +522,7 @@ public class RoguelitePanel extends PluginPanel {
 
                 try {
                     if (plugin != null) {
-                        met = req.isMet(plugin,plugin.getUnlockedIds());
+                        met = req.isMet(plugin, plugin.getUnlockedIds());
                     }
                 } catch (Exception | AssertionError e) {
                     met = false;
@@ -509,7 +557,7 @@ public class RoguelitePanel extends PluginPanel {
 
                 try {
                     if (plugin != null) {
-                        met = req.isMet(plugin,plugin.getUnlockedIds());
+                        met = req.isMet(plugin, plugin.getUnlockedIds());
                     }
                 } catch (Exception | AssertionError e) {
                     met = false;

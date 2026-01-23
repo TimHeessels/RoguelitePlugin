@@ -1,4 +1,4 @@
-package com.rogueliteplugin;
+package com.rogueliteplugin.data;
 
 public enum PackChoiceState
 {

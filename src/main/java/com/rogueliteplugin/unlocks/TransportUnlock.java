@@ -1,5 +1,7 @@
 package com.rogueliteplugin.unlocks;
 
+import com.rogueliteplugin.data.UnlockType;
+
 import javax.swing.*;
 
 public class TransportUnlock implements Unlock

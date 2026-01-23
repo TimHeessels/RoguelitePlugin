@@ -7,26 +7,20 @@ import net.runelite.api.InventoryID;
 import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
 import net.runelite.api.widgets.*;
-import net.runelite.client.game.ItemManager;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
 
-import java.awt.AlphaComposite;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
-import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.image.BufferedImage;
 
-import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.widgets.Widget;
-import net.runelite.api.widgets.WidgetItem;
 
 import java.awt.*;
 import java.util.Arrays;
 
-public class InventorySlotPanel extends Overlay {
+public class InventorySlotPanelOverlay extends Overlay {
     private static final int TOTAL_ROWS = 7;
     private static final int INVENTORY_SIZE = 28;
 
@@ -34,7 +28,7 @@ public class InventorySlotPanel extends Overlay {
     private final Client client;
 
     @Inject
-    private InventorySlotPanel(RoguelitePlugin plugin, Client client) {
+    private InventorySlotPanelOverlay(RoguelitePlugin plugin, Client client) {
         this.client = client;
         this.plugin = plugin;
 

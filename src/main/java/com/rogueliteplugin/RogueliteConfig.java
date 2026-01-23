@@ -11,38 +11,34 @@ public interface RogueliteConfig extends Config {
     @ConfigItem(
             keyName = "currentChallengeProgress",
             name = "Current goal progress",
-            description = "The progress to the current challenge goal",
-            hidden = true
+            description = "The progress to the current challenge goal"
     )
-    default long currentChallengeProgress() {
-        return 0L;
+    default int currentChallengeProgress() {
+        return 0;
     }
 
     @ConfigItem(
             keyName = "currentChallengeProgress",
             name = "Current goal progress",
-            description = "The progress to the current challenge goal",
-            hidden = true
+            description = "The progress to the current challenge goal"
     )
-    void currentChallengeProgress(long value);
+    void currentChallengeProgress(int value);
 
     @ConfigItem(
             keyName = "currentChallengeGoal",
             name = "Current goal goal",
-            description = "The goal of the current challenge",
-            hidden = true
+            description = "The goal of the current challenge"
     )
-    default long currentChallengeGoal() {
-        return 0L;
+    default int currentChallengeGoal() {
+        return 0;
     }
 
     @ConfigItem(
             keyName = "currentChallengeGoal",
             name = "Current goal goal",
-            description = "The goal of the current challenge",
-            hidden = true
+            description = "The goal of the current challenge"
     )
-    void currentChallengeGoal(long value);
+    void currentChallengeGoal(int value);
 
     @ConfigItem(
             keyName = "illegalXPGained",

@@ -69,6 +69,7 @@ public class ChallengeManager {
         clientConfig = config;
         runeliteClient = client;
         String id = config.currentChallengeID();
+
         if (id == null || id.isEmpty()) {
             return;
         }
