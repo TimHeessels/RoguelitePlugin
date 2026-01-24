@@ -143,7 +143,7 @@ public class RoguelitePanel extends PluginPanel {
 
         if (plugin.getPackChoiceState() == PackChoiceState.NONE && plugin.anyChallengeActive()) {
             //Forfeit current challenge button
-            content.add(createActionButton("<html>Forfeit current challenge<br>Removes a random unlock!</html>",
+            content.add(createActionButton("<html>Forfeit challenge<br>Removes random unlock!</html>",
                     true, "/icons/challenge/forfeit.png", e -> showConfirmationDialog(
                             "Are you sure you want to skip this challenge without using skip-tokens? This WILL remove a random unlock!",
                             "Confirm Challenge Skip",
@@ -152,7 +152,7 @@ public class RoguelitePanel extends PluginPanel {
 
             //Skip current challenge button
             boolean skipChallengeButtonActive = plugin.getSkipTokens() > 0;
-            content.add(createActionButton("<html>Skip current challenge<br>(You have " + plugin.getSkipTokens() + " skip tokens)</html>",
+            content.add(createActionButton("<html>Skip challenge<br>(You have " + plugin.getSkipTokens() + " skip tokens)</html>",
                     skipChallengeButtonActive, "/icons/currency/skip.png", e -> showConfirmationDialog(
                             "Are you sure you want to skip this challenge using a skip-token? This will NOT remove a random unlock.",
                             "Confirm Challenge Skip",
@@ -161,7 +161,7 @@ public class RoguelitePanel extends PluginPanel {
         }
 
         //Reroll current pack button
-        if (plugin.getPackChoiceState() == PackChoiceState.CHOOSING) {
+        if (plugin.getPackChoiceState() == PackChoiceState.PACKGENERATED) {
             boolean rerollButtonActive = plugin.getRerollTokens() > 0;
             content.add(createActionButton("<html>Reroll pack options<br>(You have " + plugin.getRerollTokens() + " skip tokens)</html>",
                     rerollButtonActive, "/icons/currency/reroll.png", e -> showConfirmationDialog(
@@ -172,7 +172,7 @@ public class RoguelitePanel extends PluginPanel {
         }
 
         // Show pack choice cards if user is choosing
-        if (plugin.getPackChoiceState() == PackChoiceState.CHOOSING) {
+        if (plugin.getPackChoiceState() == PackChoiceState.PACKGENERATED) {
             content.add(new JLabel("Choose a card,"));
             content.add(new JLabel("you can only pick one:"));
             content.add(Box.createVerticalStrut(8));
@@ -180,10 +180,10 @@ public class RoguelitePanel extends PluginPanel {
             for (PackOption option : plugin.getCurrentPackOptions()) {
                 Unlock unlock = ((UnlockPackOption) option).getUnlock();
                 Icon icon = resolveIcon(unlock);
-                int balancedAmount = plugin.getBalancedChallengeAmount(((UnlockPackOption) option).getChallengeLowAmount(), ((UnlockPackOption) option).getChallengeHighAmount());
+
                 String challengeName = option.getChallengeName().replace("$", NumberFormat
                         .getInstance(new Locale("nl", "NL"))
-                        .format(balancedAmount));
+                        .format(option.getChallengeAmount()));
 
                 PackOptionButton button = new PackOptionButton(
                         option.getDisplayName(),
@@ -197,7 +197,7 @@ public class RoguelitePanel extends PluginPanel {
                 button.setMaximumSize(
                         new Dimension(Integer.MAX_VALUE, button.getPreferredSize().height)
                 );
-                button.addActionListener(e -> plugin.onPackOptionSelected(option,balancedAmount));
+                button.addActionListener(e -> plugin.onPackOptionSelected(option,option.getChallengeAmount()));
 
                 optionButtons.add(button);
                 content.add(button);

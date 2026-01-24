@@ -8,10 +8,12 @@ import com.rogueliteplugin.unlocks.Unlock;
 public class UnlockPackOption implements PackOption {
     private final Unlock unlock;
     private final Challenge challenge;
+    private final Integer challengeAmount;
 
-    public UnlockPackOption(Unlock unlock, Challenge challenge) {
+    public UnlockPackOption(Unlock unlock, Challenge challenge, int challengeAmount) {
         this.unlock = unlock;
         this.challenge = challenge;
+        this.challengeAmount = challengeAmount;
     }
 
     public Unlock getUnlock() {
@@ -28,6 +30,10 @@ public class UnlockPackOption implements PackOption {
 
     public Integer getChallengeHighAmount() {
         return challenge.getHighAmount();
+    }
+
+    public Integer getChallengeAmount() {
+        return challengeAmount;
     }
 
     public String getChallengeType() {
@@ -51,7 +57,7 @@ public class UnlockPackOption implements PackOption {
 
     @Override
     public void onChosen(RoguelitePlugin plugin, int balancedAmount) {
-        plugin.setActiveChallenge(challenge,balancedAmount);
+        plugin.setActiveChallenge(challenge, balancedAmount);
         plugin.unlock(unlock.getId());
     }
 }

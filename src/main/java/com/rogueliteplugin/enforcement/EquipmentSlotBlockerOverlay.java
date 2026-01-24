@@ -11,6 +11,7 @@ import net.runelite.api.*;
 import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.widgets.*;
+import net.runelite.client.callback.ClientThread;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.game.ItemManager;
 
@@ -29,6 +30,9 @@ public class EquipmentSlotBlockerOverlay {
 
     @Inject
     private ItemManager itemManager;
+
+    @Inject
+    private ClientThread clientThread;
 
     // Map EquipSlot enum to EquipmentInventorySlot and widget child IDs
     private static final UnlockEquipslot.EquipSlot[] EQUIP_SLOTS = {
@@ -90,14 +94,16 @@ public class EquipmentSlotBlockerOverlay {
         if (children == null)
             return;
 
-        for (UnlockEquipslot.EquipSlot slot : EQUIP_SLOTS) {
-            Integer idx = SLOT_INDEX.get(slot);
-            if (idx == null || idx >= children.length)
-                continue;
+        clientThread.invokeLater(() -> {
+            for (UnlockEquipslot.EquipSlot slot : EQUIP_SLOTS) {
+                Integer idx = SLOT_INDEX.get(slot);
+                if (idx == null || idx >= children.length)
+                    continue;
 
-            Widget slotWidget = children[idx];
-            applyGrayOverlay(slotWidget, slot);
-        }
+                Widget slotWidget = children[idx];
+                applyGrayOverlay(slotWidget, slot);
+            }
+        });
     }
 
     //Map of EquipSlot to widget child index in the equipment interface
@@ -174,16 +180,19 @@ public class EquipmentSlotBlockerOverlay {
         if (children == null)
             return;
 
-        for (UnlockEquipslot.EquipSlot slot : EQUIP_SLOTS) {
-            Integer idx = SLOT_INDEX.get(slot);
-            if (idx == null || idx >= children.length)
-                continue;
 
-            Widget slotWidget = children[idx];
-            if (slotWidget != null) {
-                applyGrayOverlay(slotWidget, slot);
+        clientThread.invokeLater(() -> {
+            for (UnlockEquipslot.EquipSlot slot : EQUIP_SLOTS) {
+                Integer idx = SLOT_INDEX.get(slot);
+                if (idx == null || idx >= children.length)
+                    continue;
+
+                Widget slotWidget = children[idx];
+                if (slotWidget != null) {
+                    applyGrayOverlay(slotWidget, slot);
+                }
             }
-        }
+        });
     }
 
     public void clearAll() {
@@ -195,26 +204,29 @@ public class EquipmentSlotBlockerOverlay {
         if (children == null)
             return;
 
-        for (UnlockEquipslot.EquipSlot slot : EQUIP_SLOTS) {
-            Integer idx = SLOT_INDEX.get(slot);
-            if (idx == null || idx >= children.length)
-                continue;
 
-            Widget child = children[idx];
-            if (child == null)
-                continue;
+        clientThread.invokeLater(() -> {
+            for (UnlockEquipslot.EquipSlot slot : EQUIP_SLOTS) {
+                Integer idx = SLOT_INDEX.get(slot);
+                if (idx == null || idx >= children.length)
+                    continue;
 
-            Widget gray = child.getChild(GRAY_OVERLAY_CHILD_ID);
-            if (gray != null) {
-                gray.setHidden(true);
-                gray.revalidate();
+                Widget child = children[idx];
+                if (child == null)
+                    continue;
+
+                Widget gray = child.getChild(GRAY_OVERLAY_CHILD_ID);
+                if (gray != null) {
+                    gray.setHidden(true);
+                    gray.revalidate();
+                }
+
+                Widget lock = child.getChild(LOCK_ICON_CHILD_ID);
+                if (lock != null) {
+                    lock.setHidden(true);
+                    lock.revalidate();
+                }
             }
-
-            Widget lock = child.getChild(LOCK_ICON_CHILD_ID);
-            if (lock != null) {
-                lock.setHidden(true);
-                lock.revalidate();
-            }
-        }
+        });
     }
 }

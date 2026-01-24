@@ -13,5 +13,7 @@ public interface PackOption {
 
     String getChallengeType();
 
+    Integer getChallengeAmount();
+
     void onChosen(RoguelitePlugin plugin, int balancedAmount);
 }

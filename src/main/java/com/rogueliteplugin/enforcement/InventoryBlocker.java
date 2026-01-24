@@ -113,8 +113,6 @@ public class InventoryBlocker {
 
     private void replaceInventory(Widget w) {
 
-        plugin.Debug("Replacing inventory fillers...");
-
         int fillerId = replaceItemID;
 
         int maxFillerAmount = 28 - (getUnlockedRows() * 4);
@@ -132,12 +130,10 @@ public class InventoryBlocker {
         int diff = fillerCount - maxFillerAmount;
 
         for (Widget i : children) {
-            plugin.Debug("Inventory item: " + i.getItemId());
             if (i.getItemId() == fillerId) {
                 if (diff > 0) {
                     diff--;
                 } else {
-                    plugin.Debug("Filler for slot "+i.getIndex()+" applied.");
                     i.setName("Filler");
                     i.setTargetVerb(null);
                     i.setItemId(ItemID.BANK_FILLER);

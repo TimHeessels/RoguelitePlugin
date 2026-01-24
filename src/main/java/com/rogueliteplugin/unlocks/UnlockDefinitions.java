@@ -78,8 +78,7 @@ public final class UnlockDefinitions {
         String[][] defs = {
                 {"FairyRings", "Fairy Rings"},
                 {"SpiritTrees", "Spirit Trees"},
-                {"SpelbookTeleports", "Teleport Tablets"},
-                {"TeleportTablets", "Teleport Tablets"},
+                {"SpelbookTeleports", "Teleport using spells"},
                 {"MinigameTeleports", "Minigame Teleports"},
                 {"CharterShips", "Charter Ships"},
                 {"AgilityShortcuts", "Agility Shortcuts"},

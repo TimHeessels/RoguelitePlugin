@@ -1,5 +1,6 @@
 package com.rogueliteplugin;
 
+import java.lang.reflect.Type;
 import java.util.*;
 import javax.inject.Inject;
 
@@ -8,6 +9,8 @@ import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.rogueliteplugin.data.ChallengeType;
 import com.rogueliteplugin.data.PackChoiceState;
 import com.google.inject.Provides;
@@ -15,6 +18,7 @@ import com.rogueliteplugin.challenge.*;
 import com.rogueliteplugin.data.UnlockType;
 import com.rogueliteplugin.enforcement.*;
 import com.rogueliteplugin.pack.PackOption;
+import com.rogueliteplugin.pack.SerializablePackOption;
 import com.rogueliteplugin.pack.UnlockPackOption;
 import com.rogueliteplugin.requirements.AppearRequirement;
 import com.rogueliteplugin.unlocks.*;
@@ -33,15 +37,10 @@ import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.config.ConfigManager;
-import net.runelite.client.game.SpriteManager;
 
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.ClientToolbar;
-import net.runelite.client.ui.overlay.tooltip.TooltipManager;
 import net.runelite.client.util.ImageUtil;
-import net.runelite.client.util.Text;
-import net.runelite.http.api.item.ItemEquipmentStats;
-import net.runelite.http.api.item.ItemStats;
 
 @Slf4j
 @PluginDescriptor(
@@ -53,13 +52,6 @@ public class RoguelitePlugin extends Plugin {
 
     public Client getClient() {
         return client;
-    }
-
-    @Inject
-    private SpriteManager spriteManager;
-
-    public SpriteManager getSpriteManager() {
-        return spriteManager;
     }
 
     @Inject
@@ -81,7 +73,7 @@ public class RoguelitePlugin extends Plugin {
     private QuestBlocker questBlocker;
 
     @Inject
-    private EquipmentSlotBlockerOverlay equipmentSlotBlocker;
+    public EquipmentSlotBlockerOverlay equipmentSlotBlocker;
 
     @Inject
     private ShopBlocker shopBlocker;
@@ -98,25 +90,18 @@ public class RoguelitePlugin extends Plugin {
     @Inject
     private SkillIconManager skillIconManager;
 
-    private static final int XP_PER_POINT = 50;
     private Map<Skill, Integer> previousXp = new EnumMap<>(Skill.class);
 
     private final RogueliteInfoboxOverlay overlay = new RogueliteInfoboxOverlay(this);
 
     @Inject
-    private InventorySlotPanelOverlay inventoryBlockOverlay; //Old system
-
-    @Inject
     private InventoryBlocker inventoryBlocker;
 
     @Inject
-    private TransportBlocker teleportBlocker;
+    private MenuOptionBlocker teleportBlocker;
 
     @Inject
     private InventoryFillerTooltip inventoryFillerTooltip;
-
-    @Inject
-    private TooltipManager tooltipManager;
 
     @Inject
     private ClientToolbar clientToolbar;
@@ -172,8 +157,6 @@ public class RoguelitePlugin extends Plugin {
 
         //Load current challenge state
         challengeManager.loadFromConfig(config, client, challengeRegistry);
-        Debug("Challenge progress: "+challengeManager.getCurrent().getProgress());
-        Debug("Challenge goal: "+challengeManager.getCurrent().getGoal());
 
         overlayManager.add(overlay);
         //overlayManager.add(inventoryBlockOverlay);
@@ -184,8 +167,9 @@ public class RoguelitePlugin extends Plugin {
         eventBus.register(inventoryBlocker);
         eventBus.register(teleportBlocker);
         overlayManager.add(inventoryFillerTooltip);
-
         loadUnlocked();
+
+        loadPackOptionsFromConfig();
 
         //Check if HP is unlocked (it should always be unlocked)
         if (!unlockedIds.contains("SKILL_HITPOINTS"))
@@ -203,12 +187,43 @@ public class RoguelitePlugin extends Plugin {
         log.debug("Roguelite plugin started!");
     }
 
+    private void loadPackOptionsFromConfig() {
+        String stateStr = config.packChoiceState();
+        try {
+            packChoiceState = PackChoiceState.valueOf(stateStr);
+        } catch (IllegalArgumentException e) {
+            packChoiceState = PackChoiceState.NONE;
+        }
+
+        if (packChoiceState != PackChoiceState.PACKGENERATED) {
+            return;
+        }
+
+        Debug("Player was choosing cards, loading from config");
+
+        String json = config.currentPackOptions();
+        Type listType = new TypeToken<List<SerializablePackOption>>() {
+        }.getType();
+        List<SerializablePackOption> serialized = new Gson().fromJson(json, listType);
+
+        if (serialized != null && !serialized.isEmpty()) {
+            currentPackOptions = serialized.stream()
+                    .map(s -> {
+                        Unlock unlock = unlockRegistry.get(s.getUnlockId());
+                        Challenge challenge = s.getChallengeId() != null
+                                ? challengeRegistry.get(s.getChallengeId())
+                                : null;
+                        return new UnlockPackOption(unlock, challenge, s.getBalancedAmount());
+                    })
+                    .collect(Collectors.toList());
+        }
+    }
+
     @Override
     protected void shutDown() throws Exception {
         log.debug("Roguelite plugin stopped!");
         previousXp.clear();
         overlayManager.remove(overlay);
-        //overlayManager.remove(inventoryBlockOverlay);
         eventBus.unregister(skillBlocker);
         eventBus.unregister(questBlocker);
         eventBus.unregister(equipmentSlotBlocker);
@@ -216,7 +231,6 @@ public class RoguelitePlugin extends Plugin {
         eventBus.unregister(inventoryBlocker);
         eventBus.unregister(teleportBlocker);
         overlayManager.remove(inventoryFillerTooltip);
-        //clientThread.invoke(inventoryBlocker::redrawInventory);
 
         skillBlocker.clearAll();
         equipmentSlotBlocker.clearAll();
@@ -225,14 +239,20 @@ public class RoguelitePlugin extends Plugin {
 
     @Subscribe
     public void onConfigChanged(ConfigChanged event) {
-        if (!RogueliteConfig.GROUP.equals(event.getGroup())) {
+        if (!event.getGroup().equals("rogueliteplugin"))
             return;
-        }
         log.debug("Runelite config changes!");
+
+        //Don't refresh stuff for progress changes as they have their own handling
+        if (Objects.equals(event.getKey(), "currentChallengeProgress"))
+            return;
+        if (Objects.equals(event.getKey(), "illegalXPGained"))
+            return;
 
         skillBlocker.refreshAll();
         equipmentSlotBlocker.refreshAll();
         clientThread.invoke(inventoryBlocker::redrawInventory);
+        panel.refresh();
     }
 
     @Subscribe
@@ -345,15 +365,6 @@ public class RoguelitePlugin extends Plugin {
     }
 
     @Subscribe
-    public void onWidgetLoaded(WidgetLoaded event) {
-        /*
-        if (event.getGroupId() == InterfaceID.INVENTORY) {
-            overlayManager.resetOverlay(inventoryBlockOverlay);
-        }
-         */
-    }
-
-    @Subscribe
     public void onChatMessage(ChatMessage chatMessage) {
         if (chatMessage.getType() != ChatMessageType.SPAM)
             return;
@@ -379,7 +390,7 @@ public class RoguelitePlugin extends Plugin {
     }
 
     public void onBuyPackClicked() {
-        if (clientThread == null || packChoiceState == PackChoiceState.CHOOSING)
+        if (clientThread == null || packChoiceState == PackChoiceState.PACKGENERATED)
             return;
 
         clientThread.invoke(() ->
@@ -395,7 +406,6 @@ public class RoguelitePlugin extends Plugin {
                 return;
             }
             generatePackOptions();
-            packChoiceState = PackChoiceState.CHOOSING;
 
             // Refresh panel UI
             if (panel != null) {
@@ -419,11 +429,16 @@ public class RoguelitePlugin extends Plugin {
             if (unlock instanceof CurrencyUnlock) {
                 ((CurrencyUnlock) unlock).grant(this);
             } else {
-                option.onChosen(this,balancedAmount);
+                option.onChosen(this, balancedAmount);
             }
 
             packChoiceState = PackChoiceState.NONE;
             currentPackOptions = List.of();
+
+            //Clear active config
+            configManager.setConfiguration(RogueliteConfig.GROUP, "currentPackOptions", "[]");
+            configManager.setConfiguration(RogueliteConfig.GROUP, "packChoiceState", "NONE");
+
 
             if (panel != null) {
                 panel.refresh();
@@ -463,6 +478,7 @@ public class RoguelitePlugin extends Plugin {
         return unlockedIds.contains("SKILL_" + skill.name());
     }
 
+    /* TODO: Check if this can be deleted
     public Map<UnlockType, List<Unlock>> getUnlockedByType() {
         Map<UnlockType, List<Unlock>> map = new EnumMap<>(UnlockType.class);
 
@@ -475,6 +491,7 @@ public class RoguelitePlugin extends Plugin {
 
         return map;
     }
+     */
 
     private void loadUnlocked() {
         unlockedIds.clear();
@@ -547,7 +564,7 @@ public class RoguelitePlugin extends Plugin {
         return unlock != null ? unlock.getDisplayName() : randomUnlockId;
     }
 
-    public void setActiveChallenge(Challenge activeChallenge,int balancedAmount) {
+    public void setActiveChallenge(Challenge activeChallenge, int balancedAmount) {
         challengeManager.startChallenge(activeChallenge, balancedAmount);
     }
 
@@ -597,12 +614,47 @@ public class RoguelitePlugin extends Plugin {
                     Challenge challenge =
                             pickChallengeWithDiversityBias(validChallenges, usedChallengeTypes);
 
-                    if (challenge != null)
+                    if (challenge != null) {
                         usedChallengeTypes.add(challenge.getType());
 
-                    return new UnlockPackOption(unlock, challenge);
+                        int challengeLowAmount = challenge.getLowAmount();
+                        Debug("challengeLowAmount: " + challengeLowAmount);
+                        int challengeHighAmount = challenge.getHighAmount();
+                        Debug("challengeHighAmount: " + challengeHighAmount);
+
+                        int finalChallengeAmount = getBalancedChallengeAmount(challengeLowAmount, challengeHighAmount);
+                        Debug("finalChallengeAmount: " + finalChallengeAmount);
+                        return new UnlockPackOption(unlock, challenge, finalChallengeAmount);
+                    }
+                    {
+                        Debug("No challenge assigned, this shouldn't be possible.");
+                        return new UnlockPackOption(unlock, null, 0);
+                    }
                 })
                 .collect(Collectors.toList());
+
+
+        packChoiceState = PackChoiceState.PACKGENERATED;
+
+        // Save to config for when users reload client while cards are generated
+        savePackOptionsToConfig();
+    }
+
+    private void savePackOptionsToConfig() {
+        List<SerializablePackOption> serializable = currentPackOptions.stream()
+                .map(opt -> {
+                    UnlockPackOption unlockOpt = (UnlockPackOption) opt;
+                    return new SerializablePackOption(
+                            unlockOpt.getUnlock().getId(),
+                            unlockOpt.getChallenge() != null ? unlockOpt.getChallenge().getId() : null,
+                            unlockOpt.getChallengeAmount()
+                    );
+                })
+                .collect(Collectors.toList());
+
+        String json = new Gson().toJson(serializable);
+        configManager.setConfiguration(RogueliteConfig.GROUP, "currentPackOptions", json);
+        configManager.setConfiguration(RogueliteConfig.GROUP, "packChoiceState", packChoiceState.name());
     }
 
     private Unlock pickUnlockWithDiversityBias(
@@ -629,7 +681,7 @@ public class RoguelitePlugin extends Plugin {
         return pool.get(random.nextInt(pool.size()));
     }
 
-    public int getBalancedChallengeAmount(int min, int max) {
+    int getBalancedChallengeAmount(int min, int max) {
         Player player = client.getLocalPlayer();
         if (player == null) {
             return min;
@@ -716,63 +768,6 @@ public class RoguelitePlugin extends Plugin {
                 panel.refresh();
             }
         });
-    }
-
-    List<String> EQUIP_MENU_OPTIONS = Arrays.asList("Wield", "Wear", "Equip", "Hold", "Ride", "Chill");
-    List<String> EAT_MENU_OPTIONS = Arrays.asList("Eat", "Consume");  //TODO: Check if more needed
-    List<String> POTIONS_MENU_OPTIONS = Arrays.asList("Drink"); //TODO: Check if more needed
-
-    @Subscribe
-    public void onMenuOptionClicked(MenuOptionClicked event) {
-        String raw = event.getMenuOption();
-        if (raw == null) return;
-        String option = Text.removeTags(raw).trim();
-
-        if (EQUIP_MENU_OPTIONS.contains(option)) {
-            CheckIfCanEquipItem(event);
-            return;
-        }
-
-        Debug("Mouseclick option: " + option);
-
-        if (EAT_MENU_OPTIONS.contains(option) && !isUnlocked("Food")) {
-            ShowPluginChat("<col=ff0000><b>Eating food locked!</b></col> You haven't unlocked the ability to eat food yet!", true);
-            event.consume();
-            return;
-        }
-
-        if (POTIONS_MENU_OPTIONS.contains(option) && !isUnlocked("Potions")) {
-            ShowPluginChat("<col=ff0000><b>Drinking potions locked!</b></col> You haven't unlocked the ability to drink potions yet!", true);
-            event.consume();
-        }
-    }
-
-    void CheckIfCanEquipItem(MenuOptionClicked event) {
-        int itemId = event.getItemId();
-        if (itemId <= 0) {
-            return;
-        }
-
-        ItemStats itemStats = itemManager.getItemStats(itemId, true);
-        if (itemStats == null || !itemStats.isEquipable()) {
-            return;
-        }
-
-        ItemEquipmentStats equipStats = itemStats.getEquipment();
-        if (equipStats == null) {
-            return;
-        }
-
-        // Determine required equipment slot
-        UnlockEquipslot.EquipSlot slot = equipmentSlotBlocker.mapSlotFromEquipStats(equipStats.getSlot());
-        if (slot == null) {
-            return;
-        }
-
-        if (!isUnlocked("EQUIP_" + slot)) {
-            ShowPluginChat("<col=ff0000><b>Possibly locked!</b></col>" + slot.getDisplayName() + " is not unlocked yet.", true);
-            event.consume();
-        }
     }
 
     public void ShowPluginChat(String message, boolean isError) {

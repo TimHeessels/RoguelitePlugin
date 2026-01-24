@@ -13,6 +13,7 @@ import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetPositionMode;
 import net.runelite.api.widgets.WidgetSizeMode;
 import net.runelite.api.widgets.WidgetType;
+import net.runelite.client.callback.ClientThread;
 import net.runelite.client.eventbus.Subscribe;
 
 public class SkillBlocker {
@@ -27,6 +28,8 @@ public class SkillBlocker {
 
     @Inject
     private Client client;
+    @Inject
+    private ClientThread clientThread;
 
     @Inject
     private RoguelitePlugin plugin;
@@ -65,27 +68,16 @@ public class SkillBlocker {
             return;
         }
 
-        //TODO: Change to and fix:
-        /*
-        @Subscribe
-public void onWidgetLoaded(WidgetLoaded event)
-{
-    if (event.getGroupId() != WidgetID.SKILLS_GROUP_ID)
-    {
-        return;
-    }
-
-         */
-
         Widget container = client.getWidget(InterfaceID.Stats.UNIVERSE);
         if (container == null) {
             return;
         }
-
-        Widget[] tiles = container.getStaticChildren();
-        for (int i = 0; i < tiles.length && i < SKILLS_TAB_ORDER.length; i++) {
-            applyGrayOverlay(tiles[i], SKILLS_TAB_ORDER[i]);
-        }
+        clientThread.invokeLater(() -> {
+            Widget[] tiles = container.getStaticChildren();
+            for (int i = 0; i < tiles.length && i < SKILLS_TAB_ORDER.length; i++) {
+                applyGrayOverlay(tiles[i], SKILLS_TAB_ORDER[i]);
+            }
+        });
     }
 
     private void applyGrayOverlay(Widget parent, Skill skill) {
@@ -171,9 +163,12 @@ public void onWidgetLoaded(WidgetLoaded event)
             return;
         }
 
-        Widget[] tiles = container.getStaticChildren();
-        for (int i = 0; i < tiles.length && i < SKILLS_TAB_ORDER.length; i++) {
-            applyGrayOverlay(tiles[i], SKILLS_TAB_ORDER[i]);
-        }
+
+        clientThread.invokeLater(() -> {
+            Widget[] tiles = container.getStaticChildren();
+            for (int i = 0; i < tiles.length && i < SKILLS_TAB_ORDER.length; i++) {
+                applyGrayOverlay(tiles[i], SKILLS_TAB_ORDER[i]);
+            }
+        });
     }
 }

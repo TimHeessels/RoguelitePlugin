@@ -7,6 +7,38 @@ import net.runelite.client.config.ConfigItem;
 @ConfigGroup("rogueliteplugin")
 public interface RogueliteConfig extends Config {
     String GROUP = "rogueliteplugin";
+    
+    @ConfigItem(
+            keyName = "currentPackOptions",
+            name = "Current Pack Options",
+            description = "JSON representation of current pack options"
+    )
+    default String currentPackOptions() {
+        return "[]";
+    }
+
+    @ConfigItem(
+            keyName = "currentPackOptions",
+            name = "",
+            description = ""
+    )
+    void currentPackOptions(String value);
+
+    @ConfigItem(
+            keyName = "packChoiceState",
+            name = "Pack Choice State",
+            description = "Current state of pack selection"
+    )
+    default String packChoiceState() {
+        return "NONE";
+    }
+
+    @ConfigItem(
+            keyName = "packChoiceState",
+            name = "",
+            description = ""
+    )
+    void packChoiceState(String value);
 
     @ConfigItem(
             keyName = "currentChallengeProgress",

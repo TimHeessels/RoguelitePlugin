@@ -17,9 +17,6 @@ import static com.rogueliteplugin.data.QuestYearList.QUEST_YEAR;
 public class QuestBlocker {
 
     private static final int QUEST_LIST_REBUILD_SCRIPT = 2646;
-
-    private static final String LOCK_PREFIX = "X ";
-    private static final String UNLOCK_PREFIX = "✓ ";
     private static final String GRAY_TAG = "<col=9f9f9f>";
     private static final String END_TAG = "</col>";
 
@@ -88,15 +85,11 @@ public class QuestBlocker {
                 continue;
             }
 
-            // Remove existing prefix
-            if (clean.startsWith(LOCK_PREFIX)) {
-                clean = clean.substring(LOCK_PREFIX.length());
-            } else if (clean.startsWith(UNLOCK_PREFIX)) {
-                clean = clean.substring(UNLOCK_PREFIX.length());
-            }
-
             String questName = clean.split("\\(")[0].trim();
             String questYear = getQuestYear(questName);
+
+            plugin.Debug("questName: "+questName + ", questYear: "+questYear);
+
             if (questYear == null)
                 continue;
 
@@ -106,7 +99,7 @@ public class QuestBlocker {
             if (unlocked)
                 displayText = clean; // no color override
             else
-                displayText = GRAY_TAG + "X> " + clean + END_TAG;
+                displayText = GRAY_TAG + "[X] " + clean + END_TAG;
 
             entry.setText(displayText);
             entry.revalidate();
