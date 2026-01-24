@@ -1,8 +1,10 @@
 package com.rogueliteplugin.unlocks;
 
 import com.rogueliteplugin.data.UnlockType;
+import com.rogueliteplugin.requirements.AppearRequirement;
 
 import javax.swing.*;
+import java.util.List;
 
 public class TransportUnlock implements Unlock
 {
@@ -10,13 +12,16 @@ public class TransportUnlock implements Unlock
     private final String name;
     private final Icon icon;
     private final String description;
+    private final List<AppearRequirement> requirements;
 
-    public TransportUnlock(String id, String name, Icon icon, String description)
+    public TransportUnlock(String id, String name, Icon icon, String description,
+                           List<AppearRequirement> requirements)
     {
         this.id = id;
         this.name = name;
         this.icon = icon;
         this.description = description;
+        this.requirements = requirements;
     }
 
     @Override
@@ -47,5 +52,11 @@ public class TransportUnlock implements Unlock
     public UnlockIcon getIcon()
     {
         return new ImageUnlockIcon(icon);
+    }
+
+    @Override
+    public List<AppearRequirement> getRequirements()
+    {
+        return requirements;
     }
 }

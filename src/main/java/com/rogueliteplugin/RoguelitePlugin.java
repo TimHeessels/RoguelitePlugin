@@ -25,6 +25,7 @@ import com.rogueliteplugin.unlocks.*;
 import net.runelite.api.*;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.*;
+import net.runelite.api.vars.AccountType;
 import net.runelite.client.callback.ClientThread;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.eventbus.EventBus;
@@ -139,6 +140,10 @@ public class RoguelitePlugin extends Plugin {
 
     public Set<String> getUnlockedIds() {
         return unlockedIds;
+    }
+
+    public boolean isInMemberWorld() {
+        return client.getWorldType().contains(WorldType.MEMBERS);
     }
 
     @Provides

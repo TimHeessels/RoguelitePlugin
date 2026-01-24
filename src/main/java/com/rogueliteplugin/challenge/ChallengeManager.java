@@ -1,12 +1,14 @@
 package com.rogueliteplugin.challenge;
 
 import com.rogueliteplugin.RogueliteConfig;
+import lombok.Getter;
 import net.runelite.api.Client;
 
 import java.text.NumberFormat;
 import java.util.Locale;
 
 public class ChallengeManager {
+    @Getter
     private ChallengeState current;
     private RogueliteConfig clientConfig;
     private Client runeliteClient;
@@ -22,20 +24,14 @@ public class ChallengeManager {
                 .format(current.getGoal()));
     }
 
-    public ChallengeState getCurrent() {
-        return current;
-    }
-
     public boolean hasActiveChallenge() {
         return current != null && !current.isComplete();
     }
 
     public void increment(int amount) {
-        if (current.isComplete())
+        if (current == null || current.isComplete())
             return;
-        if (current != null) {
-            current.increment(amount);
-        }
+        current.increment(amount);
         if (current.getProgress() >= current.getGoal())
             CompleteGoal();
         else
@@ -43,20 +39,15 @@ public class ChallengeManager {
     }
 
     public void CompleteGoal() {
-        current.CompleteGoal();
         runeliteClient.playSoundEffect(3283);
-        saveToConfig();
-    }
-
-    //TODO: Check if need to implement
-    public void clear() {
-        current = null;
+        current = null;  // Clear after completion
         saveToConfig();
     }
 
     public void saveToConfig() {
         if (current == null) {
             clientConfig.currentChallengeID("");
+            clientConfig.currentChallengeProgress(0);
             return;
         }
 
