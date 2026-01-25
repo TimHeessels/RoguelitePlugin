@@ -58,7 +58,7 @@ public interface RogueliteConfig extends Config {
 
     @ConfigItem(
             keyName = "currentChallengeGoal",
-            name = "Current goal goal",
+            name = "Current goal",
             description = "The goal of the current challenge"
     )
     default int currentChallengeGoal() {
@@ -67,7 +67,7 @@ public interface RogueliteConfig extends Config {
 
     @ConfigItem(
             keyName = "currentChallengeGoal",
-            name = "Current goal goal",
+            name = "Current goal",
             description = "The goal of the current challenge"
     )
     void currentChallengeGoal(int value);

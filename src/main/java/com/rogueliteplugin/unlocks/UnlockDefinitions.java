@@ -144,7 +144,7 @@ public final class UnlockDefinitions {
     private static void registerInventoryUnlocks(UnlockRegistry registry) {
         Integer previousRow = null;
 
-        for (int i = 0; i < 6; i++) {
+        for (int i = 2; i < 8; i++) {
             List<AppearRequirement> reqs = new ArrayList<>();
 
             if (previousRow != null)
@@ -153,7 +153,7 @@ public final class UnlockDefinitions {
             registry.register(
                     new InventorySpaceUnlock(
                             "InventoryRow" + i,
-                            "Inventory row " + (i + 2),
+                            "Inventory row " + i,
                             IconLoader.load("inventory/inventoryExpansion.png"),
                             "Access to more inventory space.",
                             reqs

@@ -25,7 +25,6 @@ import com.rogueliteplugin.unlocks.*;
 import net.runelite.api.*;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.*;
-import net.runelite.api.vars.AccountType;
 import net.runelite.client.callback.ClientThread;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.eventbus.EventBus;
@@ -107,7 +106,7 @@ public class RoguelitePlugin extends Plugin {
     @Inject
     private ClientToolbar clientToolbar;
 
-    private RoguelitePanel panel;
+    private RoguelitePanel swingPanel;
     private NavigationButton navButton;
 
     private final Random random = new Random();
@@ -173,23 +172,32 @@ public class RoguelitePlugin extends Plugin {
         eventBus.register(teleportBlocker);
         overlayManager.add(inventoryFillerTooltip);
         loadUnlocked();
-
         loadPackOptionsFromConfig();
+        RefreshAllBlockers();
 
         //Check if HP is unlocked (it should always be unlocked)
         if (!unlockedIds.contains("SKILL_HITPOINTS"))
             unlock("SKILL_HITPOINTS");
 
         //Build the panel
-        panel = new RoguelitePanel(this);
+        swingPanel = new RoguelitePanel(this);
         navButton = NavigationButton.builder()
                 .tooltip("Roguelite")
                 .icon(ImageUtil.loadImageResource(getClass(), "/icon.png"))
-                .panel(panel)
+                .panel(swingPanel)
                 .build();
 
         clientToolbar.addNavigation(navButton);
         log.debug("Roguelite plugin started!");
+    }
+
+    private void RefreshAllBlockers() {
+        skillBlocker.refreshAll();
+        equipmentSlotBlocker.refreshAll();
+        questBlocker.refreshAll();
+        clientThread.invoke(inventoryBlocker::redrawInventory);
+        if (swingPanel != null)
+            swingPanel.refresh();
     }
 
     private void loadPackOptionsFromConfig() {
@@ -236,9 +244,10 @@ public class RoguelitePlugin extends Plugin {
         eventBus.unregister(inventoryBlocker);
         eventBus.unregister(teleportBlocker);
         overlayManager.remove(inventoryFillerTooltip);
-
-        skillBlocker.clearAll();
         equipmentSlotBlocker.clearAll();
+        skillBlocker.clearAll();
+        questBlocker.clearAll();
+        //TODO: Clear inventory blocker
         clientToolbar.removeNavigation(navButton);
     }
 
@@ -254,10 +263,7 @@ public class RoguelitePlugin extends Plugin {
         if (Objects.equals(event.getKey(), "illegalXPGained"))
             return;
 
-        skillBlocker.refreshAll();
-        equipmentSlotBlocker.refreshAll();
-        clientThread.invoke(inventoryBlocker::redrawInventory);
-        panel.refresh();
+        RefreshAllBlockers();
     }
 
     @Subscribe
@@ -323,9 +329,9 @@ public class RoguelitePlugin extends Plugin {
         Debug(xp + " xp gained in " + skill.getName() + " size: " + previousXp.size());
         if (!statsInitialized && previousXp.size() >= EXPECTED_SKILL_COUNT) {
             statsInitialized = true;
-            if (panel != null) {
+            if (swingPanel != null) {
                 Debug("Refreshing panel due to login");
-                panel.refresh();
+                swingPanel.refresh();
             }
         }
 
@@ -405,16 +411,16 @@ public class RoguelitePlugin extends Plugin {
 
             if (!statsInitialized) {
                 //TODO: Notify user to relog
-                if (panel != null) {
-                    panel.refresh();
+                if (swingPanel != null) {
+                    swingPanel.refresh();
                 }
                 return;
             }
             generatePackOptions();
 
             // Refresh panel UI
-            if (panel != null) {
-                panel.refresh();
+            if (swingPanel != null) {
+                swingPanel.refresh();
             }
 
             client.addChatMessage(
@@ -445,8 +451,8 @@ public class RoguelitePlugin extends Plugin {
             configManager.setConfiguration(RogueliteConfig.GROUP, "packChoiceState", "NONE");
 
 
-            if (panel != null) {
-                panel.refresh();
+            if (swingPanel != null) {
+                swingPanel.refresh();
             }
         });
     }
@@ -531,13 +537,7 @@ public class RoguelitePlugin extends Plugin {
     public void unlock(String unlockID) {
         if (unlockedIds.add(unlockID)) {
             saveUnlocked();
-
-            skillBlocker.refreshAll();
-            equipmentSlotBlocker.refreshAll();
-
-            if (panel != null) {
-                panel.refresh();
-            }
+            RefreshAllBlockers();
         }
     }
 
@@ -557,12 +557,7 @@ public class RoguelitePlugin extends Plugin {
         saveUnlocked();
 
         // Refresh UI and blockers
-        skillBlocker.refreshAll();
-        equipmentSlotBlocker.refreshAll();
-
-        if (panel != null) {
-            panel.refresh();
-        }
+        RefreshAllBlockers();
 
         // Get the unlock's display name
         Unlock unlock = unlockRegistry.get(randomUnlockId);
@@ -718,8 +713,8 @@ public class RoguelitePlugin extends Plugin {
 
     public void addRerollTokens(int amount) {
         config.rerollTokens(config.rerollTokens() + amount);
-        if (panel != null) {
-            panel.refresh();
+        if (swingPanel != null) {
+            swingPanel.refresh();
         }
     }
 
@@ -739,8 +734,8 @@ public class RoguelitePlugin extends Plugin {
 
     public void addChallengeSkipTokens(int amount) {
         config.skipTokens(config.skipTokens() + amount);
-        if (panel != null) {
-            panel.refresh();
+        if (swingPanel != null) {
+            swingPanel.refresh();
         }
     }
 
@@ -751,8 +746,8 @@ public class RoguelitePlugin extends Plugin {
             Debug("Bought reroll, new token amount: " + config.skipTokens());
             challengeManager.CompleteGoal();
             ShowPluginChat("<col=ff0000><b>Challenge skipped! </b></col> You used a skip-token to skip the current challenge.", false);
-            if (panel != null) {
-                panel.refresh();
+            if (swingPanel != null) {
+                swingPanel.refresh();
             }
         });
     }
@@ -769,8 +764,8 @@ public class RoguelitePlugin extends Plugin {
                 ShowPluginChat("<col=ff0000><b>Challenge skipped! </b></col> You have forfeited your current challenge but had no unlocks left to lose.", false);
             }
             challengeManager.CompleteGoal();
-            if (panel != null) {
-                panel.refresh();
+            if (swingPanel != null) {
+                swingPanel.refresh();
             }
         });
     }

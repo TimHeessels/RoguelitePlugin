@@ -166,10 +166,11 @@ public class MenuOptionBlocker {
         return (opt.contains("charter"));
     }
 
+    //TODO: Check all NPCs that offer balloon transport
     private boolean isBaloonTransport(String option) {
         String opt = option.toLowerCase().trim();
         plugin.Debug("Click options: " + opt);
-        return (opt.contains("fly"));
+        return false;
     }
 
     private boolean isGnomeGlider(String option) {

@@ -5,6 +5,7 @@ import com.google.inject.Inject;
 import java.awt.Color;
 
 import com.rogueliteplugin.RoguelitePlugin;
+import com.rogueliteplugin.unlocks.UnlockEquipslot;
 import net.runelite.api.Client;
 import net.runelite.api.Skill;
 import net.runelite.api.events.ScriptPostFired;
@@ -68,16 +69,7 @@ public class SkillBlocker {
             return;
         }
 
-        Widget container = client.getWidget(InterfaceID.Stats.UNIVERSE);
-        if (container == null) {
-            return;
-        }
-        clientThread.invokeLater(() -> {
-            Widget[] tiles = container.getStaticChildren();
-            for (int i = 0; i < tiles.length && i < SKILLS_TAB_ORDER.length; i++) {
-                applyGrayOverlay(tiles[i], SKILLS_TAB_ORDER[i]);
-            }
-        });
+        refreshAll();
     }
 
     private void applyGrayOverlay(Widget parent, Skill skill) {
@@ -118,6 +110,7 @@ public class SkillBlocker {
             gray.setOpacity(255);
             lockIcon.setHidden(true);
         } else {
+            gray.setHidden(false);
             gray.setOpacity(GRAY_OPACITY);
             lockIcon.setHidden(false);
         }
@@ -127,42 +120,26 @@ public class SkillBlocker {
     }
 
     public void clearAll() {
+        plugin.Debug("Clearing skilling slot overlays");
         Widget container = client.getWidget(InterfaceID.Stats.UNIVERSE);
         if (container == null) {
             return;
         }
 
-        for (Widget child : container.getStaticChildren()) {
-            if (child == null) {
-                continue;
+        clientThread.invokeLater(() -> {
+            Widget[] tiles = container.getStaticChildren();
+            for (int i = 0; i < tiles.length && i < SKILLS_TAB_ORDER.length; i++) {
+                removeGrayOverlay(tiles[i]);
             }
-
-            // Remove gray overlay
-            Widget gray = child.getChild(GRAY_OVERLAY_CHILD_ID);
-            if (gray != null) {
-                gray.setOpacity(255);
-                gray.revalidate();
-            }
-
-            // Remove lock icon
-            Widget lock = child.getChild(LOCK_ICON_CHILD_ID);
-            if (lock != null) {
-                lock.setHidden(true);
-                lock.revalidate();
-            }
-
-            // Remove tooltip listener
-            child.setOnMouseOverListener((Object[]) null);
-            child.setHasListener(false);
-        }
+        });
     }
 
     public void refreshAll() {
+        plugin.Debug("Refreshing skilling slot overlays");
         Widget container = client.getWidget(InterfaceID.Stats.UNIVERSE);
         if (container == null) {
             return;
         }
-
 
         clientThread.invokeLater(() -> {
             Widget[] tiles = container.getStaticChildren();
@@ -170,5 +147,19 @@ public class SkillBlocker {
                 applyGrayOverlay(tiles[i], SKILLS_TAB_ORDER[i]);
             }
         });
+    }
+
+    private void removeGrayOverlay(Widget parent) {
+        if (parent == null) {
+            return;
+        }
+
+        Widget gray = parent.getChild(GRAY_OVERLAY_CHILD_ID);
+        if (gray != null)
+            gray.setHidden(true);
+
+        Widget lockIcon = parent.getChild(LOCK_ICON_CHILD_ID);
+        if (lockIcon != null)
+            lockIcon.setHidden(true);
     }
 }

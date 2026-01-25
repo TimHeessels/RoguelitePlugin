@@ -4,6 +4,7 @@ Thanks to CarlOmega for the awesome idea of using items as blocks.
  */
 
 package com.rogueliteplugin.enforcement;
+
 import com.google.inject.Inject;
 import com.rogueliteplugin.RoguelitePlugin;
 import net.runelite.api.Client;
@@ -16,6 +17,7 @@ import net.runelite.api.widgets.Widget;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.game.ItemManager;
+
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -36,12 +38,18 @@ public class InventoryBlocker {
 
     //TEMP
     int replaceItemID = ItemID.LEAFLET_DROPPER_FLYER;
-    private static final int TOTAL_ROWS = 7;
+    private static final int TOTAL_ROWS = 8;
 
     public void redrawInventory() {
         client.runScript(914, -2147483644, 1130, 4);
         client.runScript(3281, 2776, 1);
-        client.runScript(Objects.requireNonNull(client.getWidget(ComponentID.INVENTORY_CONTAINER)).getOnInvTransmitListener());
+        Widget inventoryWidget = client.getWidget(ComponentID.INVENTORY_CONTAINER);
+        if (inventoryWidget != null) {
+            Object[] listener = inventoryWidget.getOnInvTransmitListener();
+            if (listener != null) {
+                client.runScript(listener);
+            }
+        }
     }
 
     @Subscribe
@@ -116,6 +124,9 @@ public class InventoryBlocker {
         int fillerId = replaceItemID;
 
         int maxFillerAmount = 28 - (getUnlockedRows() * 4);
+
+        plugin.Debug("maxFillerAmount: "+maxFillerAmount);
+
         boolean replaceItemWithBlocks = true;
         if (w == null || !replaceItemWithBlocks) {
             return;
@@ -148,8 +159,10 @@ public class InventoryBlocker {
 
     private int getUnlockedRows() {
         int rows = 1; // first row always unlocked
-        for (int i = 1; i < TOTAL_ROWS; i++) {
-            if (plugin.isUnlocked("InventorySlots" + i))
+        for (int i = 2; i < TOTAL_ROWS; i++) {
+            boolean rowUnlocked = plugin.isUnlocked("InventoryRow" + i);
+            plugin.Debug("rowUnlocked: "+rowUnlocked);
+            if (rowUnlocked)
                 rows++;
         }
         return rows;

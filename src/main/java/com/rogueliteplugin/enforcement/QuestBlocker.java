@@ -35,13 +35,24 @@ public class QuestBlocker {
         if (id != ScriptID.QUESTLIST_INIT && id != QUEST_LIST_REBUILD_SCRIPT) {
             return;
         }
+        refreshAll();
+    }
 
+    public void refreshAll() {
         clientThread.invokeLater(() ->
                 clientThread.invokeLater(this::applyQuestPrefixes)
         );
     }
 
     private void applyQuestPrefixes() {
+        buildQuestList(true);
+    }
+
+    private void clearQuestPrefixes() {
+        buildQuestList(false);
+    }
+
+    private void buildQuestList(boolean applyPrefixes) {
         Widget root = client.getWidget(WidgetInfo.QUESTLIST_CONTAINER);
         if (root == null) {
             return;
@@ -79,21 +90,23 @@ public class QuestBlocker {
             }
 
             String clean = Text.removeTags(text).trim();
-
-            // Skip headers like "--- Free Quests ---"
             if (clean.startsWith("-")) {
+                // Skip headers
                 continue;
             }
 
-            String questName = clean.split("\\(")[0].trim();
-            String questYear = getQuestYear(questName);
+            boolean unlocked = true;
+            if (applyPrefixes) {
+                String questName = clean.split("\\(")[0].trim();
+                String questYear = getQuestYear(questName);
 
-            plugin.Debug("questName: "+questName + ", questYear: "+questYear);
+                plugin.Debug("questName: " + questName + ", questYear: " + questYear);
 
-            if (questYear == null)
-                continue;
+                if (questYear == null)
+                    continue;
 
-            boolean unlocked = plugin.isUnlocked("Quests" + questYear);
+                unlocked = plugin.isUnlocked("Quests" + questYear);
+            }
 
             String displayText;
             if (unlocked)
@@ -106,8 +119,13 @@ public class QuestBlocker {
         }
     }
 
-    private String getQuestYear(String questName)
-    {
+    public void clearAll() {
+        clientThread.invokeLater(() ->
+                clientThread.invokeLater(this::clearQuestPrefixes)
+        );
+    }
+
+    private String getQuestYear(String questName) {
         Quest quest = QUEST_BY_NAME.get(questName);
         return quest == null ? null : QUEST_YEAR.get(quest);
     }

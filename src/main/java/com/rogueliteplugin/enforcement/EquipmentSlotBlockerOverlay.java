@@ -84,26 +84,7 @@ public class EquipmentSlotBlockerOverlay {
         if (event.getGroupId() != WidgetID.EQUIPMENT_GROUP_ID) {
             return;
         }
-
-        Widget container = client.getWidget(InterfaceID.Wornitems.UNIVERSE);
-        if (container == null) {
-            return;
-        }
-
-        Widget[] children = container.getStaticChildren();
-        if (children == null)
-            return;
-
-        clientThread.invokeLater(() -> {
-            for (UnlockEquipslot.EquipSlot slot : EQUIP_SLOTS) {
-                Integer idx = SLOT_INDEX.get(slot);
-                if (idx == null || idx >= children.length)
-                    continue;
-
-                Widget slotWidget = children[idx];
-                applyGrayOverlay(slotWidget, slot);
-            }
-        });
+        refreshAll();
     }
 
     //Map of EquipSlot to widget child index in the equipment interface
@@ -122,6 +103,32 @@ public class EquipmentSlotBlockerOverlay {
         SLOT_INDEX.put(UnlockEquipslot.EquipSlot.BOOTS, 18);
         SLOT_INDEX.put(UnlockEquipslot.EquipSlot.RING, 19);
         SLOT_INDEX.put(UnlockEquipslot.EquipSlot.AMMO, 20);
+    }
+
+    public void refreshAll() {
+
+        plugin.Debug("Refreshing equipment slot overlays");
+        Widget container = client.getWidget(InterfaceID.Wornitems.UNIVERSE);
+        if (container == null)
+            return;
+
+        Widget[] children = container.getStaticChildren();
+        if (children == null)
+            return;
+
+
+        clientThread.invokeLater(() -> {
+            for (UnlockEquipslot.EquipSlot slot : EQUIP_SLOTS) {
+                Integer idx = SLOT_INDEX.get(slot);
+                if (idx == null || idx >= children.length)
+                    continue;
+
+                Widget slotWidget = children[idx];
+                if (slotWidget != null) {
+                    applyGrayOverlay(slotWidget, slot);
+                }
+            }
+        });
     }
 
 
@@ -162,6 +169,7 @@ public class EquipmentSlotBlockerOverlay {
             gray.setOpacity(255);
             lockIcon.setHidden(true);
         } else {
+            gray.setHidden(false);
             gray.setOpacity(GRAY_OPACITY);
             lockIcon.setHidden(false);
         }
@@ -170,16 +178,32 @@ public class EquipmentSlotBlockerOverlay {
         lockIcon.revalidate();
     }
 
-
-    public void refreshAll() {
-        Widget container = client.getWidget(InterfaceID.Wornitems.UNIVERSE);
-        if (container == null)
+    private void removeGrayOverlay(Widget parent) {
+        if (parent == null) {
             return;
+        }
+
+        Widget gray = parent.getChild(GRAY_OVERLAY_CHILD_ID);
+        if (gray != null) {
+            gray.setOpacity(0);
+            gray.setHidden(true);
+        }
+
+        Widget lockIcon = parent.getChild(LOCK_ICON_CHILD_ID);
+        if (lockIcon != null)
+            lockIcon.setHidden(true);
+    }
+
+    public void clearAll() {
+        plugin.Debug("Clearing all equipment slot overlays");
+        Widget container = client.getWidget(InterfaceID.Wornitems.UNIVERSE);
+        if (container == null) {
+            return;
+        }
 
         Widget[] children = container.getStaticChildren();
         if (children == null)
             return;
-
 
         clientThread.invokeLater(() -> {
             for (UnlockEquipslot.EquipSlot slot : EQUIP_SLOTS) {
@@ -188,44 +212,7 @@ public class EquipmentSlotBlockerOverlay {
                     continue;
 
                 Widget slotWidget = children[idx];
-                if (slotWidget != null) {
-                    applyGrayOverlay(slotWidget, slot);
-                }
-            }
-        });
-    }
-
-    public void clearAll() {
-        Widget container = client.getWidget(InterfaceID.Wornitems.UNIVERSE);
-        if (container == null)
-            return;
-
-        Widget[] children = container.getStaticChildren();
-        if (children == null)
-            return;
-
-
-        clientThread.invokeLater(() -> {
-            for (UnlockEquipslot.EquipSlot slot : EQUIP_SLOTS) {
-                Integer idx = SLOT_INDEX.get(slot);
-                if (idx == null || idx >= children.length)
-                    continue;
-
-                Widget child = children[idx];
-                if (child == null)
-                    continue;
-
-                Widget gray = child.getChild(GRAY_OVERLAY_CHILD_ID);
-                if (gray != null) {
-                    gray.setHidden(true);
-                    gray.revalidate();
-                }
-
-                Widget lock = child.getChild(LOCK_ICON_CHILD_ID);
-                if (lock != null) {
-                    lock.setHidden(true);
-                    lock.revalidate();
-                }
+                removeGrayOverlay(slotWidget);
             }
         });
     }

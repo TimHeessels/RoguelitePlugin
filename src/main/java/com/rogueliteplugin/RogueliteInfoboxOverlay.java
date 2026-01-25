@@ -39,8 +39,17 @@ public class RogueliteInfoboxOverlay extends Overlay {
                     .right(currentProgress + "")
                     .build());
         } else {
+            // If less than 2 unlocks, show welcome message
+            if ((long) plugin.getUnlockedIds().size() < 2)
+            {
+                panelComponent.getChildren().add(LineComponent.builder()
+                        .left("Welcome to the roguelite game mode. You can start the game by reading the rules and then opening a booster pack in the side panel.")
+                        .build());
+                return panelComponent.render(graphics);
+            }
+
             panelComponent.getChildren().add(LineComponent.builder()
-                    .left("Challenge complete! You can get a new card pack in the panel.")
+                    .left("Challenge complete! You can get a new card pack in the side panel.")
                     .build());
         }
 
