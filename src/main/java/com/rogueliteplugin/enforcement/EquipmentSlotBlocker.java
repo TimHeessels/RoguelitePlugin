@@ -15,7 +15,7 @@ import net.runelite.client.callback.ClientThread;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.game.ItemManager;
 
-public class EquipmentSlotBlockerOverlay {
+public class EquipmentSlotBlocker {
     private static final int LOCK_SPRITE_ID = 1342; // padlock icon
     private static final int LOCK_ICON_CHILD_ID = 1001;
     private static final int GRAY_OVERLAY_CHILD_ID = 998;

@@ -1,63 +1,31 @@
 package com.rogueliteplugin.pack;
 
 import com.rogueliteplugin.RoguelitePlugin;
-import com.rogueliteplugin.challenge.Challenge;
 import com.rogueliteplugin.unlocks.Unlock;
 
 
 public class UnlockPackOption implements PackOption {
     private final Unlock unlock;
-    private final Challenge challenge;
-    private final Integer challengeAmount;
 
-    public UnlockPackOption(Unlock unlock, Challenge challenge, int challengeAmount) {
+    public UnlockPackOption(Unlock unlock) {
         this.unlock = unlock;
-        this.challenge = challenge;
-        this.challengeAmount = challengeAmount;
     }
 
     public Unlock getUnlock() {
         return unlock;
     }
 
-    public Challenge getChallenge() {
-        return challenge;
-    }
-
-    public Integer getChallengeLowAmount() {
-        return challenge.getLowAmount();
-    }
-
-    public Integer getChallengeHighAmount() {
-        return challenge.getHighAmount();
-    }
-
-    public Integer getChallengeAmount() {
-        return challengeAmount;
-    }
-
-    public String getChallengeType() {
-        return challenge.getType().toString();
-    }
-
     @Override
     public String getDisplayName() {
         return unlock.getDisplayName();
     }
-
-    @Override
-    public String getChallengeName() {
-        return challenge.getDisplayName();
-    }
-
     @Override
     public String getDisplayType() {
         return unlock.getType().toString();
     }
 
     @Override
-    public void onChosen(RoguelitePlugin plugin, int balancedAmount) {
-        plugin.setActiveChallenge(challenge, balancedAmount);
+    public void onChosen(RoguelitePlugin plugin) {
         plugin.unlock(unlock.getId());
     }
 }

@@ -8,6 +8,7 @@ import net.runelite.client.ui.overlay.components.PanelComponent;
 import net.runelite.client.ui.overlay.components.ProgressBarComponent;
 
 import java.awt.*;
+import java.util.Objects;
 
 public class RogueliteInfoboxOverlay extends Overlay {
     private final RoguelitePlugin plugin;
@@ -24,43 +25,35 @@ public class RogueliteInfoboxOverlay extends Overlay {
         panelComponent.getChildren().clear();
         panelComponent.setPreferredSize(new Dimension(250, 0));
 
-        long currentProgress = 1;
-        long challengeGoal = 1;
-
-        if (plugin.anyChallengeActive()) {
-            currentProgress = plugin.getCurrentChallengeProgress();
-            challengeGoal = plugin.getCurrentChallengeGoal();
+        //Display welcome message on first launch
+        if ((long) plugin.getUnlockedIds().size() < 2) {
             panelComponent.getChildren().add(LineComponent.builder()
-                    .left("Current challenge")
-                    .right("Progress")
-                    .build());
-            panelComponent.getChildren().add(LineComponent.builder()
-                    .left(plugin.getCurrentChallengeFormatted())
-                    .right(currentProgress + "")
-                    .build());
-        } else {
-            // If less than 2 unlocks, show welcome message
-            if ((long) plugin.getUnlockedIds().size() < 2)
-            {
-                panelComponent.getChildren().add(LineComponent.builder()
-                        .left("Welcome to the roguelite game mode. You can start the game by reading the rules and then opening a booster pack in the side panel.")
-                        .build());
-                return panelComponent.render(graphics);
-            }
-
-            panelComponent.getChildren().add(LineComponent.builder()
-                    .left("Challenge complete! You can get a new card pack in the side panel.")
+                    .left("Welcome to the roguelite game mode. You can start the game by reading the rules and then opening a booster pack in the side panel.")
                     .build());
         }
 
+        long barProgress = plugin.getCurrentPoints();
+        long barGoal = plugin.cardPackCost;
+        panelComponent.getChildren().add(LineComponent.builder()
+                .left("Current points")
+                .right("Available packs")
+                .build());
+        panelComponent.getChildren().add(LineComponent.builder()
+                .left(plugin.getCurrentPoints() + "/" + plugin.cardPackCost)
+                .right(plugin.getAvailablePacks() + "")
+                .build());
+
         panelComponent.getChildren().add(LineComponent.builder().build());
 
+        panelComponent.getChildren().add(LineComponent.builder()
+                .left("Point progress towards next pack")
+                .build());
         ProgressBarComponent bar = new ProgressBarComponent();
         bar.setMinimum(0);
-        bar.setMaximum(challengeGoal);
-        bar.setValue(currentProgress);
+        bar.setMaximum(barGoal);
+        bar.setValue(barProgress);
         bar.setPreferredSize(new Dimension(220, 12));
-        if (currentProgress >= challengeGoal)
+        if (barProgress >= barGoal)
             bar.setForegroundColor(new Color(0, 170, 0));
         else
             bar.setForegroundColor(new Color(255, 152, 31));

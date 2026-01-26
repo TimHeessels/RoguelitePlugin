@@ -28,29 +28,8 @@ public final class UnlockDefinitions {
         registerBosses(registry);
         registerTransport(registry);
         registerQuestTiers(registry);
-        registerCurrencies(registry);
         registerEquipmentSlots(registry);
         registerConsumables(registry);
-    }
-
-    private static void registerCurrencies(UnlockRegistry registry) {
-        registry.register(new CurrencyUnlock(
-                "CURRENCY_REROLL",
-                "Pack reroll Token",
-                IconLoader.load("currency/reroll.png"),
-                "Allows you to reroll the current pack options once.",
-                CurrencyUnlock.CurrencyType.REROLL,
-                1
-        ));
-
-        registry.register(new CurrencyUnlock(
-                "CURRENCY_SKIP",
-                "Challenge skip Token",
-                IconLoader.load("currency/skip.png"),
-                "Allows you to skip the current challenge.",
-                CurrencyUnlock.CurrencyType.SKIP,
-                1
-        ));
     }
 
     private static void registerConsumables(UnlockRegistry registry) {

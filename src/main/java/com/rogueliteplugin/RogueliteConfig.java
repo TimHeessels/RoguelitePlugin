@@ -41,38 +41,6 @@ public interface RogueliteConfig extends Config {
     void packChoiceState(String value);
 
     @ConfigItem(
-            keyName = "currentChallengeProgress",
-            name = "Current goal progress",
-            description = "The progress to the current challenge goal"
-    )
-    default int currentChallengeProgress() {
-        return 0;
-    }
-
-    @ConfigItem(
-            keyName = "currentChallengeProgress",
-            name = "Current goal progress",
-            description = "The progress to the current challenge goal"
-    )
-    void currentChallengeProgress(int value);
-
-    @ConfigItem(
-            keyName = "currentChallengeGoal",
-            name = "Current goal",
-            description = "The goal of the current challenge"
-    )
-    default int currentChallengeGoal() {
-        return 0;
-    }
-
-    @ConfigItem(
-            keyName = "currentChallengeGoal",
-            name = "Current goal",
-            description = "The goal of the current challenge"
-    )
-    void currentChallengeGoal(int value);
-
-    @ConfigItem(
             keyName = "illegalXPGained",
             name = "XP gained in blocked skills",
             description = "Total XP you gained in skills you did not have unlocked",
@@ -91,20 +59,20 @@ public interface RogueliteConfig extends Config {
     void illegalXPGained(long value);
 
     @ConfigItem(
-            keyName = "currentChallengeID",
-            name = "Current challenge",
-            description = "Which challenge ID is currently active?"
+            keyName = "currentPoints",
+            name = "current item points",
+            description = "How many points you gained from getting unique items"
     )
-    default String currentChallengeID() {
-        return "";
+    default int currentPoints() {
+        return 0;
     }
 
     @ConfigItem(
-            keyName = "currentChallengeID",
-            name = "Current challenge",
-            description = "Which challenge ID is currently active?"
+            keyName = "currentPoints",
+            name = "current item points",
+            description = "How many points you gained from getting unique items"
     )
-    void currentChallengeID(String value);
+    void currentPoints(int value);
 
     @ConfigItem(
             keyName = "unlockedIds",
@@ -116,36 +84,20 @@ public interface RogueliteConfig extends Config {
     }
 
     @ConfigItem(
-            keyName = "rerollTokens",
-            name = "Reroll Tokens",
-            description = "Number of pack reroll tokens available"
+            keyName = "seenItemIds",
+            name = "Seen item IDs",
+            description = "Comma-separated list of item IDs that have been picked up"
     )
-    default int rerollTokens()
+    default String seenItemIds()
     {
-        return 0;
+        return "";
     }
 
     @ConfigItem(
-            keyName = "rerollTokens",
-            name = "",
-            description = ""
+            keyName = "seenItemIds",
+            name = "Seen item IDs",
+            description = "Comma-separated list of item IDs that have been picked up"
     )
-    void rerollTokens(int value);
+    void seenItemIds(String value);
 
-    @ConfigItem(
-            keyName = "skipTokens",
-            name = "Skip Tokens",
-            description = "Number of challenge skip tokens available"
-    )
-    default int skipTokens()
-    {
-        return 0;
-    }
-
-    @ConfigItem(
-            keyName = "skipTokens",
-            name = "",
-            description = ""
-    )
-    void skipTokens(int value);
 }

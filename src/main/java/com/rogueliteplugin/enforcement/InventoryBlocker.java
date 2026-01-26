@@ -36,8 +36,6 @@ public class InventoryBlocker {
 
     private Widget invUpdateWidget;
 
-    //TEMP
-    int replaceItemID = ItemID.LEAFLET_DROPPER_FLYER;
     private static final int TOTAL_ROWS = 8;
 
     public void redrawInventory() {
@@ -121,7 +119,7 @@ public class InventoryBlocker {
 
     private void replaceInventory(Widget w) {
 
-        int fillerId = replaceItemID;
+        int fillerId = plugin.replaceItemID;
 
         int maxFillerAmount = 28 - (getUnlockedRows() * 4);
 

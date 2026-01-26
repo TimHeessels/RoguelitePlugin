@@ -1,7 +1,6 @@
 package com.rogueliteplugin.requirements;
 
 import com.rogueliteplugin.RoguelitePlugin;
-import com.rogueliteplugin.challenge.ChallengeContext;
 import net.runelite.api.Experience;
 import net.runelite.api.Skill;
 

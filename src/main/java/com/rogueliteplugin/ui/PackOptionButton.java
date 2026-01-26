@@ -12,15 +12,10 @@ public class PackOptionButton extends JButton {
     private final String unlockType;
     private final Icon unlockIcon;
 
-    private final String challengeTitle;
-    private final String challengeType;
-
-    public PackOptionButton(String unlockTitle, String unlockType, String challengeTitle, String challengeType, Icon unlockIcon) {
+    public PackOptionButton(String unlockTitle, String unlockType, Icon unlockIcon) {
         this.unlockTitle = unlockTitle;
         this.unlockIcon = unlockIcon;
         this.unlockType = unlockType;
-        this.challengeTitle = challengeTitle;
-        this.challengeType = challengeType;
 
         Dimension size = new Dimension(CARD_WIDTH, CARD_HEIGHT);
         setPreferredSize(size);
@@ -49,12 +44,7 @@ public class PackOptionButton extends JButton {
                 + "<span style='font-size:14px; color:#46a720;'>"
                 + "Unlock<br>"
                 + unlockType+ "<br>"
-                + unlockTitle + "</span><br><br>"
-                + "<span style='font-size:14px; color:#4656ff;'>"
-                + "Next challenge<br>"
-                + challengeType + "<br>"
-                + challengeTitle
-                + "</span><br>"
+                + unlockTitle + "</span>"
                 + "</center></html>");
 
         setIcon(unlockIcon);

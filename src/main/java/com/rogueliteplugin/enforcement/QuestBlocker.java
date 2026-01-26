@@ -100,8 +100,6 @@ public class QuestBlocker {
                 String questName = clean.split("\\(")[0].trim();
                 String questYear = getQuestYear(questName);
 
-                plugin.Debug("questName: " + questName + ", questYear: " + questYear);
-
                 if (questYear == null)
                     continue;
 
