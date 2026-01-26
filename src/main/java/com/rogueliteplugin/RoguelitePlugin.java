@@ -163,7 +163,6 @@ public class RoguelitePlugin extends Plugin {
         challengeManager.loadFromConfig(config, client, challengeRegistry);
 
         overlayManager.add(overlay);
-        //overlayManager.add(inventoryBlockOverlay);
         eventBus.register(skillBlocker);
         eventBus.register(questBlocker);
         eventBus.register(equipmentSlotBlocker);

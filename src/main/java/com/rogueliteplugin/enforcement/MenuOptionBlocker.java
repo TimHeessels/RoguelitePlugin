@@ -5,7 +5,6 @@ import com.rogueliteplugin.unlocks.UnlockEquipslot;
 import net.runelite.api.Client;
 import net.runelite.api.MenuAction;
 import net.runelite.api.events.MenuOptionClicked;
-import net.runelite.api.gameval.NpcID;
 import net.runelite.api.gameval.ObjectID;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.game.AgilityShortcut;
@@ -27,14 +26,16 @@ public class MenuOptionBlocker {
     @Inject
     private ItemManager itemManager;
 
-    List<String> EQUIP_MENU_OPTIONS = Arrays.asList("Wield", "Wear", "Equip", "Hold", "Ride", "Chill");
-    List<String> EAT_MENU_OPTIONS = Arrays.asList("Eat", "Consume");  //TODO: Check if more needed
-    List<String> POTIONS_MENU_OPTIONS = Arrays.asList("Drink"); //TODO: Check if more needed
+    List<String> EQUIP_MENU_OPTIONS = Arrays.asList("wield", "wear", "equip", "hold", "ride", "chill");
+    List<String> EAT_MENU_OPTIONS = Arrays.asList("eat", "consume");  //TODO: Check if more needed
+    List<String> POTIONS_MENU_OPTIONS = Arrays.asList("drink"); //TODO: Check if more needed
 
     @Subscribe
     public void onMenuOptionClicked(MenuOptionClicked event) {
-        String target = event.getMenuTarget();
-        String option = event.getMenuOption();
+        String target = event.getMenuTarget().toLowerCase();
+        String option = event.getMenuOption().toLowerCase();
+
+        plugin.Debug("target: "+target + ", option: "+option+", id: "+event.getId()+", action: "+event.getMenuAction());
 
         if (EQUIP_MENU_OPTIONS.contains(option)) {
             CheckIfCanEquipItem(event);
@@ -86,14 +87,14 @@ public class MenuOptionBlocker {
 
         // Check spirit tree shortcuts
         // TODO: Check if working on all spririt tree types
-        if (isSpiritTree(event.getId()) && !plugin.isUnlocked("SpiritTrees")) {
+        if (isSpiritTree(option, target) && !plugin.isUnlocked("SpiritTrees")) {
             event.consume();
             plugin.ShowPluginChat("<col=ff0000><b>Spirit tree usage locked</b></col> Using spirit tree is not unlocked yet.", true);
             return;
         }
 
         // Check Charter ships shortcuts
-        if (isChartership(option) && !plugin.isUnlocked("CharterShips")) {
+        if (isChartership(option, target) && !plugin.isUnlocked("CharterShips")) {
             event.consume();
             plugin.ShowPluginChat("<col=ff0000><b>Charter ships usage locked</b></col> Using charter ships is not unlocked yet.", true);
             return;
@@ -101,7 +102,7 @@ public class MenuOptionBlocker {
 
         // Check balloon transport
         // TODO: Check if working
-        if (isBaloonTransport(option) && !plugin.isUnlocked("BalloonTransport")) {
+        if (isBaloonTransport(option,target) && !plugin.isUnlocked("BalloonTransport")) {
             event.consume();
             plugin.ShowPluginChat("<col=ff0000><b>Balloon transport usage locked</b></col> Using balloon transport is not unlocked yet.", true);
             return;
@@ -109,7 +110,7 @@ public class MenuOptionBlocker {
 
         // Check gnome glider
         // TODO: Check if working
-        if (isGnomeGlider(option) && !plugin.isUnlocked("GnomeGliders")) {
+        if (isGnomeGlider(option,target) && !plugin.isUnlocked("GnomeGliders")) {
             event.consume();
             plugin.ShowPluginChat("<col=ff0000><b>Gnome glider usage locked</b></col> Using gnome glider is not unlocked yet.", true);
         }
@@ -127,7 +128,7 @@ public class MenuOptionBlocker {
     }
 
     private boolean isTeleportSpellOption(String target) {
-        String tgt = target.toLowerCase()
+        String tgt = target
                 .replaceAll("<.*?>", "")
                 .replaceAll("[^a-z ]", "")
                 .trim();
@@ -148,35 +149,29 @@ public class MenuOptionBlocker {
         return objectId >= 29495 && objectId <= 29624;
     }
 
-    private boolean isSpiritTree(int objectId) {
-        int[] objectToCheck = {ObjectID.SPIRITTREE_SMALL, ObjectID.SPIRITTREE_BIG_1OP, ObjectID.SPIRITTREE_BIG_2OPS,
-                ObjectID.SPIRITTREE_BIG_2OPS_ORBS, ObjectID.SPIRITTREE_SMALL_1OP, ObjectID.SPIRITTREE_SMALL_2OPS};
-
-        for (int id : objectToCheck) {
-            if (id == objectId) {
-                return true;
-            }
-        }
-        return false;
+    private boolean isSpiritTree(String option, String target) {
+        if (!target.contains("spirit tree"))
+            return false;
+        return (option.contains("travel"));
     }
 
-    private boolean isChartership(String option) {
-        String opt = option.toLowerCase().trim();
-        plugin.Debug("Click options: " + opt);
-        return (opt.contains("charter"));
+    private boolean isChartership(String option, String target) {
+        if (!target.contains("trader crewmember"))
+            return false;
+        return (option.contains("charter"));
     }
 
-    //TODO: Check all NPCs that offer balloon transport
-    private boolean isBaloonTransport(String option) {
-        String opt = option.toLowerCase().trim();
-        plugin.Debug("Click options: " + opt);
-        return false;
+    //TODO: Add the bolloon objects as check as well ('use basket' might be too generic)
+    private boolean isBaloonTransport(String option, String target) {
+        if (!target.contains("assistant") && !target.contains("auguste"))
+            return false;
+        return (option.contains("fly"));
     }
 
-    private boolean isGnomeGlider(String option) {
-        String opt = option.toLowerCase().trim();
-        plugin.Debug("Click options: " + opt);
-        return (opt.contains("glider"));
+    private boolean isGnomeGlider(String option, String target) {
+        if (!target.contains("errdo") && !target.contains("dalbur") && !target.contains("avlafrim") && !target.contains("shoracks"))
+            return false;
+        return (option.contains("glider"));
     }
 
     void CheckIfCanEquipItem(MenuOptionClicked event) {
