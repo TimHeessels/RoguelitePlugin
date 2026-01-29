@@ -1,14 +1,18 @@
 package com.coinboundplugin;
 
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.lang.reflect.Type;
 import java.util.*;
 import javax.inject.Inject;
+import javax.swing.*;
 
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import com.coinboundplugin.overlays.CardPickOverlay;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.coinboundplugin.data.PackChoiceState;
@@ -110,6 +114,9 @@ public class CoinboundPlugin extends Plugin {
     @Inject
     private FogMapOverlay fogMapOverlay;
 
+    @Inject
+    CardPickOverlay cardPickOverlay;
+
     private CoinboundPanel swingPanel;
     private NavigationButton navButton;
 
@@ -191,6 +198,8 @@ public class CoinboundPlugin extends Plugin {
         overlayManager.add(overlay);
         overlayManager.add(fogOverlay);
         overlayManager.add(fogMapOverlay);
+        overlayManager.add(cardPickOverlay);
+        cardPickOverlay.start();
 
         eventBus.register(skillBlocker);
         eventBus.register(questBlocker);
@@ -217,7 +226,52 @@ public class CoinboundPlugin extends Plugin {
                 .build();
 
         clientToolbar.addNavigation(navButton);
+
         log.debug("Roguelite plugin started!");
+    }
+
+    void SetupCardButtons() {
+        int index = 0;
+        for (PackOption option : getCurrentPackOptions()) {
+            Unlock unlock = ((UnlockPackOption) option).getUnlock();
+            UnlockIcon icon = unlock.getIcon();
+            BufferedImage image = getBufferedImageFromIcon(icon);
+
+            SetupCardButton(index, option.getDisplayName(), option.getDisplayType(), image, option);
+            index++;
+        }
+    }
+
+    private BufferedImage getBufferedImageFromIcon(UnlockIcon icon) {
+        if (icon == null) {
+            return null;
+        }
+        if (icon instanceof ImageUnlockIcon) {
+            Icon swingIcon = ((ImageUnlockIcon) icon).getIcon();
+            if (swingIcon instanceof ImageIcon) {
+                Image img = ((ImageIcon) swingIcon).getImage();
+                if (img instanceof BufferedImage) {
+                    return (BufferedImage) img;
+                }
+                // Convert Image to BufferedImage
+                BufferedImage buffered = new BufferedImage(
+                        img.getWidth(null),
+                        img.getHeight(null),
+                        BufferedImage.TYPE_INT_ARGB
+                );
+                Graphics2D g = buffered.createGraphics();
+                g.drawImage(img, 0, 0, null);
+                g.dispose();
+                return buffered;
+            }
+        }
+        return null;
+    }
+
+    void SetupCardButton(int buttonIndex, String unlockName,String typeName, BufferedImage image, PackOption option) {
+        cardPickOverlay.setButton(buttonIndex, unlockName , typeName , image, () -> {
+            clientThread.invoke(() -> onPackOptionSelected(option));
+        });
     }
 
     private void RefreshAllBlockers() {
@@ -271,6 +325,7 @@ public class CoinboundPlugin extends Plugin {
                         return new UnlockPackOption(unlock);
                     })
                     .collect(Collectors.toList());
+            SetupCardButtons();
         }
     }
 
@@ -278,9 +333,12 @@ public class CoinboundPlugin extends Plugin {
     protected void shutDown() throws Exception {
         log.debug("Roguelite plugin stopped!");
         previousXp.clear();
+
         overlayManager.remove(overlay);
         overlayManager.remove(fogOverlay);
         overlayManager.remove(fogMapOverlay);
+        overlayManager.remove(cardPickOverlay);
+        cardPickOverlay.stop();
 
         eventBus.unregister(skillBlocker);
         eventBus.unregister(questBlocker);
@@ -292,7 +350,8 @@ public class CoinboundPlugin extends Plugin {
         equipmentSlotBlocker.clearAll();
         skillBlocker.clearAll();
         questBlocker.clearAll();
-        //TODO: Clear inventory blocker
+
+        //TODO: Clear inventory blocker (it clears on panel switch but still)
         clientToolbar.removeNavigation(navButton);
     }
 
@@ -518,7 +577,7 @@ public class CoinboundPlugin extends Plugin {
     public void onPackOptionSelected(PackOption option) {
         clientThread.invoke(() ->
         {
-            //Unlock unlock = ((UnlockPackOption) option).getUnlock();
+            ShowPluginChat("<col=329114><b>"+option.getDisplayName()+" unlocked! </b></col> ", 2308);
             option.onChosen(this);
 
             packChoiceState = PackChoiceState.NONE;
@@ -527,10 +586,6 @@ public class CoinboundPlugin extends Plugin {
             //Clear active config
             configManager.setConfiguration(CoinboundConfig.GROUP, "currentPackOptions", "[]");
             configManager.setConfiguration(CoinboundConfig.GROUP, "packChoiceState", "NONE");
-
-            if (swingPanel != null) {
-                swingPanel.refresh();
-            }
         });
     }
 
@@ -647,6 +702,7 @@ public class CoinboundPlugin extends Plugin {
 
 
         packChoiceState = PackChoiceState.PACKGENERATED;
+        SetupCardButtons();
 
         // Save to config for when users reload client while cards are generated
         savePackOptionsToConfig();
@@ -694,3 +750,4 @@ public class CoinboundPlugin extends Plugin {
             client.playSoundEffect(soundEffect);
     }
 }
+

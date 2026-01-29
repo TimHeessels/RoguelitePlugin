@@ -33,9 +33,9 @@ public class CoinboundInfoboxOverlay extends Overlay {
             return panelComponent.render(graphics);
         }
         //Go fill up inventory with flyers
-        if (plugin.gamemodeSetupState == CoinboundPlugin.SetupStage.GetFlyers || plugin.fillerItemsShort>0) {
+        if (plugin.gamemodeSetupState == CoinboundPlugin.SetupStage.GetFlyers || plugin.fillerItemsShort > 0) {
             panelComponent.getChildren().add(LineComponent.builder()
-                    .left("Please go to the Al Kharid flyerer and use the drop-trick to get "+plugin.fillerItemsShort+" more flyers to fill up your inventory.")
+                    .left("Please go to the Al Kharid flyerer and use the drop-trick to get " + plugin.fillerItemsShort + " more flyers to fill up your inventory.")
                     .build());
             return panelComponent.render(graphics);
         }
@@ -48,7 +48,7 @@ public class CoinboundInfoboxOverlay extends Overlay {
         }
         if (plugin.fillerItemsShort < 0) {
             panelComponent.getChildren().add(LineComponent.builder()
-                    .left("You can drop "+ Math.abs(plugin.fillerItemsShort)+" flyers as you have too many.")
+                    .left("You can drop " + Math.abs(plugin.fillerItemsShort) + " flyers as you have too many.")
                     .build());
         }
         long currentCoins = plugin.currentCoins;
@@ -63,13 +63,22 @@ public class CoinboundInfoboxOverlay extends Overlay {
         long barGoal = next - previous;
         long barProgress = Math.max(0, currentCoins - previous);
 
+        if (plugin.getAvailablePacksToBuy() > 1) {
+            panelComponent.getChildren().add(LineComponent.builder()
+                    .left("You have " + plugin.getAvailablePacksToBuy() + " packs available to buy! Press the button at the top of the screen to open them.")
+                    .build());
+            panelComponent.getChildren().add(LineComponent.builder().build());
+        }
+        if (plugin.getAvailablePacksToBuy() == 1) {
+            panelComponent.getChildren().add(LineComponent.builder()
+                    .left("You have a pack available to buy! Press the button at the top of the screen to open it.")
+                    .build());
+            panelComponent.getChildren().add(LineComponent.builder().build());
+        }
+
         panelComponent.getChildren().add(LineComponent.builder()
                 .left("Next pack at")
-                .right("Available packs")
-                .build());
-        panelComponent.getChildren().add(LineComponent.builder()
-                .left(next + " gp")
-                .right(plugin.getAvailablePacksToBuy() + "")
+                .right(next + " gp")
                 .build());
 
         panelComponent.getChildren().add(LineComponent.builder().build());
