@@ -63,9 +63,6 @@ public class CoinboundPlugin extends Plugin {
     private ClientThread clientThread;
 
     @Inject
-    private ItemManager itemManager;
-
-    @Inject
     private OverlayManager overlayManager;
 
     @Inject
@@ -92,7 +89,7 @@ public class CoinboundPlugin extends Plugin {
     @Inject
     private SkillIconManager skillIconManager;
 
-    private Map<Skill, Integer> previousXp = new EnumMap<>(Skill.class);
+    private final Map<Skill, Integer> previousXp = new EnumMap<>(Skill.class);
 
     private final CoinboundInfoboxOverlay overlay = new CoinboundInfoboxOverlay(this);
 
@@ -237,7 +234,7 @@ public class CoinboundPlugin extends Plugin {
             UnlockIcon icon = unlock.getIcon();
             BufferedImage image = getBufferedImageFromIcon(icon);
 
-            SetupCardButton(index, option.getDisplayName(), option.getDisplayType(), image, option);
+            SetupCardButton(index, option.getDisplayName(), option.getDisplayType(), option.getDescription(), image, option);
             index++;
         }
     }
@@ -268,8 +265,8 @@ public class CoinboundPlugin extends Plugin {
         return null;
     }
 
-    void SetupCardButton(int buttonIndex, String unlockName,String typeName, BufferedImage image, PackOption option) {
-        cardPickOverlay.setButton(buttonIndex, unlockName , typeName , image, () -> {
+    void SetupCardButton(int buttonIndex, String unlockName,String typeName, String description, BufferedImage image, PackOption option) {
+        cardPickOverlay.setButton(buttonIndex, unlockName , typeName,description , image, () -> {
             clientThread.invoke(() -> onPackOptionSelected(option));
         });
     }
@@ -446,7 +443,6 @@ public class CoinboundPlugin extends Plugin {
         } else if (!wasInside && isInside) {
             ShowPluginChat("Your house arrest device stops beeping.", -1);
         }
-
         wasInside = isInside;
     }
 

@@ -23,6 +23,10 @@ public class UnlockPackOption implements PackOption {
     public String getDisplayType() {
         return unlock.getType().toString();
     }
+    @Override
+    public String getDescription() {
+        return unlock.getDescription();
+    }
 
     @Override
     public void onChosen(CoinboundPlugin plugin) {

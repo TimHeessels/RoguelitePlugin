@@ -46,9 +46,9 @@ public final class UnlockDefinitions {
             registry.register(
                     new HouseArrestExpansion(
                             "HouseArrestRange"+(i+1),
-                            "Range Expansion"+String.format("%02d", i + 1),
+                            "Extend house arrest range ("+String.format("%02d", i + 1)+")",
                             IconLoader.load("chain.png"),
-                            "Allows you to wander further from Lumbridge.",
+                            "Allows you to wander further from the starting area.",
                             reqs
                     )
             );
@@ -84,7 +84,7 @@ public final class UnlockDefinitions {
                         "Potions",
                         "Drink potions",
                         IconLoader.load("consumables/potions.png"),
-                        "Allows potions."
+                        "Allows drinking potions."
                 )
         );
     }
@@ -170,7 +170,7 @@ public final class UnlockDefinitions {
             registry.register(
                     new InventorySpaceUnlock(
                             "InventorySlot" + (i + 1),
-                            "Inventory slot " + String.format("%02d", i + 1),
+                            "Unlock inventory slot " + String.format("%02d", i + 1),
                             IconLoader.load("inventory/inventoryExpansion.png"),
                             "Access to another inventory slot.",
                             reqs
@@ -192,7 +192,7 @@ public final class UnlockDefinitions {
                             "Quests" + quest,
                             quest.getName() ,
                             IconLoader.load("quests/quest_icon.png"),
-                            "Access to " + quest.getName(),
+                            "Allows you to start and finish " + quest.getName(),
                             reqs
                     )
             );
@@ -269,154 +269,168 @@ public final class UnlockDefinitions {
     }
 
     private static void registerBosses(UnlockRegistry registry) {
-        registry.register(new BossUnlock("MIMIC", "Mimic", IconLoader.load("icon.png"), "Fight the Mimic.", List.of(
-                new CombatRequirement(40, 126), new MemberRequirement()
-        )));
-        registry.register(new BossUnlock("OBOR", "Obor", IconLoader.load("icon.png"), "Hill giant boss.", List.of(
+        registry.register(new BossUnlock("OBOR", "Obor", IconLoader.load("boss/OBOR.png"), "Hill giant boss.", List.of(
                 new CombatRequirement(40, 126)
         )));
-        registry.register(new BossUnlock("BRYOPHYTA", "Bryophyta", IconLoader.load("icon.png"), "Moss giant boss.", List.of(
+        registry.register(new BossUnlock("BRYOPHYTA", "Bryophyta", IconLoader.load("boss/BRYOPHYTA.png"), "Moss giant boss.", List.of(
                 new CombatRequirement(40, 126)
         )));
-        registry.register(new BossUnlock("GIANT_MOLE", "Giant Mole", IconLoader.load("icon.png"), "Boss beneath Falador.", List.of(
+        registry.register(new BossUnlock("GIANT_MOLE", "Giant Mole", IconLoader.load("boss/GIANT_MOLE.png"), "Boss beneath Falador.", List.of(
                 new CombatRequirement(50, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("GROTESQUE_GUARDIANS", "Grotesque Guardians", IconLoader.load("icon.png"), "Slayer tower rooftop boss.", List.of(
+        registry.register(new BossUnlock("GROTESQUE_GUARDIANS", "Grotesque Guardians", IconLoader.load("boss/GROTESQUE_GUARDIANS.png"), "Slayer tower rooftop boss.", List.of(
                 new CombatRequirement(85, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("TEMPOROSS", "Tempoross", IconLoader.load("icon.png"), "Fishing skilling boss.", List.of(new MemberRequirement())));
-        registry.register(new BossUnlock("WINTERTODT", "Wintertodt", IconLoader.load("icon.png"), "Firemaking skilling boss.", List.of(new MemberRequirement())));
-        registry.register(new BossUnlock("BARROWS", "Barrows Brothers", IconLoader.load("icon.png"), "Barrows chest encounter.", List.of(
+        registry.register(new BossUnlock("TEMPOROSS", "Tempoross", IconLoader.load("boss/TEMPOROSS.png"), "Fishing skilling boss.", List.of(new MemberRequirement())));
+        registry.register(new BossUnlock("WINTERTODT", "Wintertodt", IconLoader.load("boss/WINTERTODT.png"), "Firemaking skilling boss.", List.of(new MemberRequirement())));
+        registry.register(new BossUnlock("BARROWS", "Barrows Brothers", IconLoader.load("boss/BARROWS.png"), "Barrows chest encounter.", List.of(
                 new CombatRequirement(40, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("SARACHNIS", "Sarachnis", IconLoader.load("icon.png"), "Spider boss in Forthos Dungeon.", List.of(
+        registry.register(new BossUnlock("SARACHNIS", "Sarachnis", IconLoader.load("boss/SARACHNIS.png"), "Spider boss in Forthos Dungeon.", List.of(
                 new CombatRequirement(40, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("KALPHITE_QUEEN", "Kalphite Queen", IconLoader.load("icon.png"), "Desert boss.", List.of(
+        registry.register(new BossUnlock("KALPHITE_QUEEN", "Kalphite Queen", IconLoader.load("boss/KALPHITE_QUEEN.png"), "Desert boss.", List.of(
                 new CombatRequirement(50, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("HESPORI", "Hespori", IconLoader.load("icon.png"), "Farming guild boss.", List.of(
+        registry.register(new BossUnlock("HESPORI", "Hespori", IconLoader.load("boss/HESPORI.png"), "Farming guild boss.", List.of(
                 new CombatRequirement(20, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("SKOTIZO", "Skotizo", IconLoader.load("icon.png"), "Demonic boss in Catacombs.", List.of(
+        registry.register(new BossUnlock("SKOTIZO", "Skotizo", IconLoader.load("boss/SKOTIZO.png"), "Demonic boss in Catacombs.", List.of(
                 new CombatRequirement(40, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("ZALCANO", "Zalcano", IconLoader.load("icon.png"), "Mining boss in Prifddinas.", List.of(new MemberRequirement()
-
+        registry.register(new BossUnlock("ZALCANO", "Zalcano", IconLoader.load("boss/ZALCANO.png"), "Mining boss in Prifddinas.", List.of(new MemberRequirement()
         )));
-        registry.register(new BossUnlock("KING_BLACK_DRAGON", "King Black Dragon", IconLoader.load("icon.png"), "Wilderness dragon boss.", List.of(
+        registry.register(new BossUnlock("KING_BLACK_DRAGON", "King Black Dragon", IconLoader.load("boss/KING_BLACK_DRAGON.png"), "Wilderness dragon boss.", List.of(
                 new CombatRequirement(60, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("KRAKEN", "Kraken", IconLoader.load("icon.png"), "Slayer boss.", List.of(
+        registry.register(new BossUnlock("KRAKEN", "Kraken", IconLoader.load("boss/KRAKEN.png"), "Slayer boss.", List.of(
                 new CombatRequirement(40, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("ABYSSAL_SIRE", "Abyssal Sire", IconLoader.load("icon.png"), "Abyssal demon boss.", List.of(
+        registry.register(new BossUnlock("ABYSSAL_SIRE", "Abyssal Sire", IconLoader.load("boss/ABYSSAL_SIRE.png"), "Abyssal demon boss.", List.of(
                 new CombatRequirement(50, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("THERMY", "Thermonuclear Smoke Devil", IconLoader.load("icon.png"), "Smoke devil boss.", List.of(
+        registry.register(new BossUnlock("THERMY", "Thermonuclear Smoke Devil", IconLoader.load("boss/THERMY.png"), "Smoke devil boss.", List.of(
                 new CombatRequirement(50, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("GAUNTLET", "The Gauntlet", IconLoader.load("icon.png"), "Prifddinas challenge.", List.of(
+        registry.register(new BossUnlock("GAUNTLET", "The Gauntlet", IconLoader.load("boss/GAUNTLET.png"), "Prifddinas challenge.", List.of(
                 new CombatRequirement(40, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("ZULRAH", "Zulrah", IconLoader.load("icon.png"), "Poisonous serpent boss.", List.of(
+        registry.register(new BossUnlock("ZULRAH", "Zulrah", IconLoader.load("boss/ZULRAH.png"), "Poisonous serpent boss.", List.of(
                 new CombatRequirement(40, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("CERBERUS", "Cerberus", IconLoader.load("icon.png"), "Hellhound boss.", List.of(
+        registry.register(new BossUnlock("CERBERUS", "Cerberus", IconLoader.load("boss/CERBERUS.png"), "Hellhound boss.", List.of(
                 new CombatRequirement(60, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("VORKATH", "Vorkath", IconLoader.load("icon.png"), "Undead dragon boss.", List.of(
+        registry.register(new BossUnlock("VORKATH", "Vorkath", IconLoader.load("boss/VORKATH.png"), "Undead dragon boss.", List.of(
                 new CombatRequirement(60, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("GENERAL_GRAARDOR", "General Graardor", IconLoader.load("icon.png"), "Bandos GWD boss.", List.of(
+        registry.register(new BossUnlock("GENERAL_GRAARDOR", "General Graardor", IconLoader.load("boss/GENERAL_GRAARDOR.png"), "Bandos GWD boss.", List.of(
                 new CombatRequirement(60, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("KRIL", "K'ril Tsutsaroth", IconLoader.load("icon.png"), "Zamorak GWD boss.", List.of(
+        registry.register(new BossUnlock("KRIL", "K'ril Tsutsaroth", IconLoader.load("boss/KRIL.png"), "Zamorak GWD boss.", List.of(
                 new CombatRequirement(60, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("ZILYANA", "Commander Zilyana", IconLoader.load("icon.png"), "Saradomin GWD boss.", List.of(
+        registry.register(new BossUnlock("ZILYANA", "Commander Zilyana", IconLoader.load("boss/ZILYANA.png"), "Saradomin GWD boss.", List.of(
                 new CombatRequirement(60, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("KREEARRA", "Kree'arra", IconLoader.load("icon.png"), "Armadyl GWD boss.", List.of(
+        registry.register(new BossUnlock("KREEARRA", "Kree'arra", IconLoader.load("boss/KREEARRA.png"), "Armadyl GWD boss.", List.of(
                 new CombatRequirement(60, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("NIGHTMARE", "The Nightmare", IconLoader.load("icon.png"), "Slepe nightmare boss.", List.of(
+        registry.register(new BossUnlock("NIGHTMARE", "The Nightmare", IconLoader.load("boss/NIGHTMARE.png"), "Slepe nightmare boss.", List.of(
                 new CombatRequirement(70, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("CORPOREAL_BEAST", "Corporeal Beast", IconLoader.load("icon.png"), "High-level group boss.", List.of(
+        registry.register(new BossUnlock("CORPOREAL_BEAST", "Corporeal Beast", IconLoader.load("boss/CORPOREAL_BEAST.png"), "High-level group boss.", List.of(
                 new CombatRequirement(60, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("COX", "Chambers of Xeric", IconLoader.load("icon.png"), "Raid.", List.of(
-                new CombatRequirement(40, 126), new MemberRequirement()
-        )));
-        registry.register(new BossUnlock("ALCHEMICAL_HYDRA", "Alchemical Hydra", IconLoader.load("icon.png"), "Hydra slayer boss.", List.of(
+        registry.register(new BossUnlock("ALCHEMICAL_HYDRA", "Alchemical Hydra", IconLoader.load("boss/ALCHEMICAL_HYDRA.png"), "Hydra slayer boss.", List.of(
                 new CombatRequirement(50, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("NEX", "Nex", IconLoader.load("icon.png"), "Ancient prison boss.", List.of(
+        registry.register(new BossUnlock("NEX", "Nex", IconLoader.load("boss/NEX.png"), "Ancient prison boss.", List.of(
                 new CombatRequirement(70, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("DK_SUPREME", "Dagannoth Supreme", IconLoader.load("icon.png"), "Dagannoth King.", List.of(
+        registry.register(new BossUnlock("DK_SUPREME", "Dagannoth Supreme", IconLoader.load("boss/DK_SUPREME.png"), "Dagannoth King.", List.of(
                 new CombatRequirement(50, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("DK_REX", "Dagannoth Rex", IconLoader.load("icon.png"), "Dagannoth King.", List.of(
+        registry.register(new BossUnlock("DK_REX", "Dagannoth Rex", IconLoader.load("boss/DK_REX.png"), "Dagannoth King.", List.of(
                 new CombatRequirement(40, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("DK_PRIME", "Dagannoth Prime", IconLoader.load("icon.png"), "Dagannoth King.", List.of(
+        registry.register(new BossUnlock("DK_PRIME", "Dagannoth Prime", IconLoader.load("boss/DK_PRIME.png"), "Dagannoth King.", List.of(
                 new CombatRequirement(50, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("CORRUPTED_GAUNTLET", "Corrupted Gauntlet", IconLoader.load("icon.png"), "Hard mode Gauntlet.", List.of(
+        registry.register(new BossUnlock("CORRUPTED_GAUNTLET", "Corrupted Gauntlet", IconLoader.load("boss/CORRUPTED_GAUNTLET.png"), "Hard mode Gauntlet.", List.of(
                 new CombatRequirement(50, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("PHANTOM_MUSPAH", "Phantom Muspah", IconLoader.load("icon.png"), "Ancient ice boss.", List.of(
+        registry.register(new BossUnlock("PHANTOM_MUSPAH", "Phantom Muspah", IconLoader.load("boss/PHANTOM_MUSPAH.png"), "Ancient ice boss.", List.of(
                 new CombatRequirement(50, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("CHAOS_ELEMENTAL", "Chaos Elemental", IconLoader.load("icon.png"), "Wilderness boss.", List.of(
+        registry.register(new BossUnlock("CHAOS_ELEMENTAL", "Chaos Elemental", IconLoader.load("boss/CHAOS_ELEMENTAL.png"), "Wilderness boss.", List.of(
                 new CombatRequirement(50, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("ARTIO", "Artio", IconLoader.load("icon.png"), "Callisto variant.", List.of(
+        registry.register(new BossUnlock("ARTIO", "Artio", IconLoader.load("boss/ARTIO.png"), "Callisto variant.", List.of(
                 new CombatRequirement(50, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("CALVARION", "Calvar'ion", IconLoader.load("icon.png"), "Vet'ion variant.", List.of(
+        registry.register(new BossUnlock("CALVARION", "Calvar'ion", IconLoader.load("boss/CALVARION.png"), "Vet'ion variant.", List.of(
                 new CombatRequirement(50, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("SPINDEL", "Spindel", IconLoader.load("icon.png"), "Venenatis variant.", List.of(
+        registry.register(new BossUnlock("SPINDEL", "Spindel", IconLoader.load("boss/SPINDEL.png"), "Venenatis variant.", List.of(
                 new CombatRequirement(50, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("CHAOS_FANATIC", "Chaos Fanatic", IconLoader.load("icon.png"), "Wilderness mage boss.", List.of(
+        registry.register(new BossUnlock("CHAOS_FANATIC", "Chaos Fanatic", IconLoader.load("boss/CHAOS_FANATIC.png"), "Wilderness mage boss.", List.of(
                 new CombatRequirement(30, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("CRAZY_ARCHAEOLOGIST", "Crazy Archaeologist", IconLoader.load("icon.png"), "Wilderness boss.", List.of(
+        registry.register(new BossUnlock("CRAZY_ARCHAEOLOGIST", "Crazy Archaeologist", IconLoader.load("boss/CRAZY_ARCHAEOLOGIST.png"), "Wilderness boss.", List.of(
                 new CombatRequirement(30, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("DERANGED_ARCHAEOLOGIST", "Deranged Archaeologist", IconLoader.load("icon.png"), "Fossil Island boss.", List.of(
+        registry.register(new BossUnlock("DERANGED_ARCHAEOLOGIST", "Deranged Archaeologist", IconLoader.load("boss/DERANGED_ARCHAEOLOGIST.png"), "Fossil Island boss.", List.of(
                 new CombatRequirement(20, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("SCORPIA", "Scorpia", IconLoader.load("icon.png"), "Wilderness scorpion.", List.of(
+        registry.register(new BossUnlock("SCORPIA", "Scorpia", IconLoader.load("boss/SCORPIA.png"), "Wilderness scorpion.", List.of(
                 new CombatRequirement(50, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("WHISPERER", "The Whisperer", IconLoader.load("icon.png"), "DT2 boss.", List.of(
+        registry.register(new BossUnlock("WHISPERER", "The Whisperer", IconLoader.load("boss/WHISPERER.png"), "DT2 boss.", List.of(
                 new CombatRequirement(80, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("DUKE", "Duke Sucellus", IconLoader.load("icon.png"), "DT2 boss.", List.of(
+        registry.register(new BossUnlock("DUKE", "Duke Sucellus", IconLoader.load("boss/DUKE.png"), "DT2 boss.", List.of(
                 new CombatRequirement(80, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("LEVIATHAN", "The Leviathan", IconLoader.load("icon.png"), "DT2 boss.", List.of(
+        registry.register(new BossUnlock("LEVIATHAN", "The Leviathan", IconLoader.load("boss/LEVIATHAN.png"), "DT2 boss.", List.of(
                 new CombatRequirement(80, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("VARDORVIS", "Vardorvis", IconLoader.load("icon.png"), "DT2 boss.", List.of(
+        registry.register(new BossUnlock("VARDORVIS", "Vardorvis", IconLoader.load("boss/VARDORVIS.png"), "DT2 boss.", List.of(
                 new CombatRequirement(80, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("SCURRIUS", "Scurrius", IconLoader.load("icon.png"), "Varrock sewer rat boss.", List.of(
+        registry.register(new BossUnlock("SCURRIUS", "Scurrius", IconLoader.load("boss/SCURRIUS.png"), "Varrock sewer rat boss.", List.of(
                 new CombatRequirement(10, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("ARAXXOR", "Araxxor", IconLoader.load("icon.png"), "Spider boss.", List.of(
+        registry.register(new BossUnlock("ARAXXOR", "Araxxor", IconLoader.load("boss/ARAXXOR.png"), "Spider boss.", List.of(
                 new CombatRequirement(60, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("AMOXLIATL", "Amoxliatl", IconLoader.load("icon.png"), "Varlamore boss.", List.of(
+        registry.register(new BossUnlock("AMOXLIATL", "Amoxliatl", IconLoader.load("boss/AMOXLIATL.png"), "Varlamore boss.", List.of(
                 new CombatRequirement(40, 126), new MemberRequirement()
         )));
-        registry.register(new BossUnlock("HUEYCOATL", "The Hueycoatl", IconLoader.load("icon.png"), "Varlamore boss.", List.of(
+        registry.register(new BossUnlock("HUEYCOATL", "The Hueycoatl", IconLoader.load("boss/HUEYCOATL.png"), "Varlamore boss.", List.of(
                 new CombatRequirement(20, 126), new MemberRequirement()
+        )));
+        registry.register(new BossUnlock("GEMSTONE_CRAB", "Gemstone crab", IconLoader.load("boss/GEMSTONE_CRAB.png"), "Varlamore boss.", List.of(
+                new CombatRequirement(1, 126), new MemberRequirement()
+        )));
+        registry.register(new BossUnlock("DOOM", "Doom of Mokhaiotl", IconLoader.load("boss/DOOM.png"), "Varlamore boss.", List.of(
+                new CombatRequirement(60, 126), new MemberRequirement()
+        )));
+        registry.register(new BossUnlock("MOONS", "Moons of peril", IconLoader.load("boss/MOONS.png"), "Varlamore boss.", List.of(
+                new CombatRequirement(30, 126), new MemberRequirement()
+        )));
+        registry.register(new BossUnlock("ROYAL_TITANS", "Royal titans", IconLoader.load("boss/ROYAL_TITANS.png"), "Two for the price of one.", List.of(
+                new CombatRequirement(50, 126), new MemberRequirement()
+        )));
+        registry.register(new BossUnlock("REVENANT_MALEDICTUS", "Revenant maledictus", IconLoader.load("boss/REVENANT_MALEDICTUS.png"), "Wilderness boss.", List.of(
+                new CombatRequirement(50, 126), new MemberRequirement()
+        )));
+        registry.register(new BossUnlock("YAMA", "Yama", IconLoader.load("boss/YAMA.png"), "666", List.of(
+                new CombatRequirement(70, 126), new MemberRequirement()
+        )));
+        registry.register(new BossUnlock("SHELLBANE_GRYPHON", "Shellbane gryphon", IconLoader.load("boss/SHELLBANE_GRYPHON.png"), "666", List.of(
+                new CombatRequirement(30, 126), new MemberRequirement()
         )));
     }
 

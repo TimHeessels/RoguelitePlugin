@@ -21,8 +21,7 @@ import java.util.List;
 
 @Singleton
 @Slf4j
-public class CardPickOverlay extends Overlay
-{
+public class CardPickOverlay extends Overlay {
     private static final int BUTTON_SIZE = 100;
     private static final int BUTTON_SPACING = 15;
     private static final int PANEL_PADDING = 20;
@@ -46,10 +45,17 @@ public class CardPickOverlay extends Overlay
     private final String[] buttonTypeNames = new String[4];
     private final BufferedImage[] buttonImages = new BufferedImage[4];
     private final Runnable[] buttonCallbacks = new Runnable[4];
+    private final String[] buttonDescriptions = new String[4];
+    private static final int HOVER_AREA_HEIGHT = 30;
+
+    //Animation
+    private long animationStartTime = 0;
+    private static final long CARD_REVEAL_DELAY_MS = 1000; // Time between each card starting
+    private static final long CARD_ANIMATION_DURATION_MS = 400; // Duration of flip animation
+
 
     @Inject
-    public CardPickOverlay(Client client, CoinboundPlugin plugin, MouseManager mouseManager)
-    {
+    public CardPickOverlay(Client client, CoinboundPlugin plugin, MouseManager mouseManager) {
         this.client = client;
         this.plugin = plugin;
         this.mouseManager = mouseManager;
@@ -58,49 +64,49 @@ public class CardPickOverlay extends Overlay
         setLayer(OverlayLayer.ABOVE_WIDGETS);
     }
 
-    public void setButton(int index, String label, String typeName, BufferedImage image, Runnable callback)
-    {
-        if (index < 0 || index >= 4)
-        {
+    public void setButton(int index, String label, String typeName, String description, BufferedImage image, Runnable callback) {
+        if (index < 0 || index >= 4) {
             return;
+        }
+        if (index == 0) {
+            startAnimation();
         }
         buttonLabels[index] = label;
         buttonTypeNames[index] = typeName;
+        buttonDescriptions[index] = description;
         buttonImages[index] = image;
         buttonCallbacks[index] = callback;
     }
 
-    public void clearButtons()
-    {
-        for (int i = 0; i < 4; i++)
-        {
+    private boolean isCardVisible(int index) {
+        return getCardAnimationProgress(index) > 0.0f;
+    }
+
+    public void clearButtons() {
+        for (int i = 0; i < 4; i++) {
             buttonLabels[i] = null;
             buttonTypeNames[i] = null;
+            buttonDescriptions[i] = null;
             buttonImages[i] = null;
             buttonCallbacks[i] = null;
         }
+        animationStartTime = 0;
     }
 
-    private final MouseAdapter mouseListener = new MouseAdapter()
-    {
-        private int getHoveredButtonIndex(MouseEvent e)
-        {
-            if (plugin.getPackChoiceState() != PackChoiceState.PACKGENERATED)
-            {
+    private final MouseAdapter mouseListener = new MouseAdapter() {
+        private int getHoveredButtonIndex(MouseEvent e) {
+            if (plugin.getPackChoiceState() != PackChoiceState.PACKGENERATED) {
                 return -1;
             }
-            for (int i = 0; i < buttonBounds.length; i++)
-            {
-                if (buttonBounds[i] != null && buttonBounds[i].contains(e.getPoint()))
-                {
+            for (int i = 0; i < buttonBounds.length; i++) {
+                if (buttonBounds[i] != null && buttonBounds[i].contains(e.getPoint())) {
                     return i;
                 }
             }
             return -1;
         }
 
-        private boolean isHoveringBuyPackButton(MouseEvent e)
-        {
+        private boolean isHoveringBuyPackButton(MouseEvent e) {
             return plugin.getPackChoiceState() == PackChoiceState.NONE
                     && plugin.getAvailablePacksToBuy() > 0
                     && buyPackButtonBounds != null
@@ -108,20 +114,16 @@ public class CardPickOverlay extends Overlay
         }
 
         @Override
-        public MouseEvent mousePressed(MouseEvent e)
-        {
-            if (getHoveredButtonIndex(e) >= 0 || isHoveringBuyPackButton(e))
-            {
+        public MouseEvent mousePressed(MouseEvent e) {
+            if (getHoveredButtonIndex(e) >= 0 || isHoveringBuyPackButton(e)) {
                 e.consume();
             }
             return e;
         }
 
         @Override
-        public MouseEvent mouseReleased(MouseEvent e)
-        {
-            if (isHoveringBuyPackButton(e))
-            {
+        public MouseEvent mouseReleased(MouseEvent e) {
+            if (isHoveringBuyPackButton(e)) {
                 log.info("Buy Pack button clicked");
                 plugin.onBuyPackClicked();
                 e.consume();
@@ -129,8 +131,7 @@ public class CardPickOverlay extends Overlay
             }
 
             int index = getHoveredButtonIndex(e);
-            if (index >= 0 && buttonCallbacks[index] != null)
-            {
+            if (index >= 0 && buttonCallbacks[index] != null) {
                 log.info("Button {} clicked", buttonLabels[index]);
                 buttonCallbacks[index].run();
                 e.consume();
@@ -139,20 +140,16 @@ public class CardPickOverlay extends Overlay
         }
 
         @Override
-        public MouseEvent mouseClicked(MouseEvent e)
-        {
-            if (getHoveredButtonIndex(e) >= 0 || isHoveringBuyPackButton(e))
-            {
+        public MouseEvent mouseClicked(MouseEvent e) {
+            if (getHoveredButtonIndex(e) >= 0 || isHoveringBuyPackButton(e)) {
                 e.consume();
             }
             return e;
         }
 
         @Override
-        public MouseEvent mouseDragged(MouseEvent e)
-        {
-            if (getHoveredButtonIndex(e) >= 0 || isHoveringBuyPackButton(e))
-            {
+        public MouseEvent mouseDragged(MouseEvent e) {
+            if (getHoveredButtonIndex(e) >= 0 || isHoveringBuyPackButton(e)) {
                 e.consume();
             }
             return e;
@@ -160,19 +157,35 @@ public class CardPickOverlay extends Overlay
     };
 
 
-    public void start()
-    {
+    public void start() {
         mouseManager.registerMouseListener(mouseListener);
     }
 
-    public void stop()
-    {
+    public void stop() {
         mouseManager.unregisterMouseListener(mouseListener);
     }
 
+
+    public void startAnimation() {
+        animationStartTime = System.currentTimeMillis();
+    }
+
+    private float getCardAnimationProgress(int index) {
+        if (animationStartTime == 0) {
+            return 1.0f;
+        }
+        long elapsed = System.currentTimeMillis() - animationStartTime;
+        long cardStartTime = index * CARD_REVEAL_DELAY_MS;
+
+        if (elapsed < cardStartTime) {
+            return 0.0f;
+        }
+        float progress = (float) (elapsed - cardStartTime) / CARD_ANIMATION_DURATION_MS;
+        return Math.min(1.0f, progress);
+    }
+
     @Override
-    public Dimension render(Graphics2D g)
-    {
+    public Dimension render(Graphics2D g) {
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         int vpX = client.getViewportXOffset();
@@ -180,8 +193,7 @@ public class CardPickOverlay extends Overlay
         int vpWidth = client.getViewportWidth();
 
         if (plugin.getPackChoiceState() == PackChoiceState.NONE) {
-            if (plugin.getAvailablePacksToBuy() > 0)
-            {
+            if (plugin.getAvailablePacksToBuy() > 0) {
                 int buyButtonWidth = 120;
                 int buyButtonHeight = 40;
                 int buyButtonX = vpX + (vpWidth / 2) - (buyButtonWidth / 2);
@@ -202,7 +214,7 @@ public class CardPickOverlay extends Overlay
                 g.setColor(TEXT_COLOR);
                 g.setFont(new Font("SansSerif", Font.BOLD, 12));
                 FontMetrics fm = g.getFontMetrics();
-                String text = "Buy Pack ("+plugin.getAvailablePacksToBuy()+")";
+                String text = "Buy Pack (" + plugin.getAvailablePacksToBuy() + ")";
                 int textX = buyButtonX + (buyButtonWidth - fm.stringWidth(text)) / 2;
                 int textY = buyButtonY + (buyButtonHeight + fm.getAscent()) / 2 - 2;
                 g.drawString(text, textX, textY);
@@ -212,10 +224,25 @@ public class CardPickOverlay extends Overlay
 
         int totalButtonsWidth = (BUTTON_SIZE * 4) + (BUTTON_SPACING * 3);
         int panelWidth = totalButtonsWidth + (PANEL_PADDING * 2);
-        int panelHeight = BUTTON_SIZE + (PANEL_PADDING * 2);
 
         int panelX = vpX + (vpWidth / 2) - (panelWidth / 2);
         int panelY = vpY + 50;
+        Point mouse = client.getMouseCanvasPosition();
+
+        int panelHeight = BUTTON_SIZE + (PANEL_PADDING * 2) + HOVER_AREA_HEIGHT;
+
+        // Find hovered card index
+        int hoveredIndex = -1;
+        for (int i = 0; i < 4; i++) {
+            if (buttonBounds[i] != null && mouse != null && buttonBounds[i].contains(mouse.getX(), mouse.getY())) {
+                float progress = getCardAnimationProgress(i);
+                if (progress >= 1.0f) {
+                    hoveredIndex = i;
+                    break;
+                }
+            }
+        }
+
 
         g.setColor(PANEL_FILL);
         g.fillRoundRect(panelX, panelY, panelWidth, panelHeight, 10, 10);
@@ -224,7 +251,6 @@ public class CardPickOverlay extends Overlay
         g.setStroke(new BasicStroke(2f));
         g.drawRoundRect(panelX, panelY, panelWidth, panelHeight, 10, 10);
 
-        Point mouse = client.getMouseCanvasPosition();
 
         int buttonStartX = panelX + PANEL_PADDING;
         int buttonY = panelY + PANEL_PADDING;
@@ -232,12 +258,43 @@ public class CardPickOverlay extends Overlay
         g.setFont(new Font("SansSerif", Font.BOLD, 10));
         FontMetrics fm = g.getFontMetrics();
 
-        for (int i = 0; i < 4; i++)
-        {
+        for (int i = 0; i < 4; i++) {
             int buttonX = buttonStartX + (i * (BUTTON_SIZE + BUTTON_SPACING));
+
+            float progress = getCardAnimationProgress(i);
+
+            // Skip if animation hasn't started for this card
+            if (progress <= 0.0f) {
+                buttonBounds[i] = null;
+                continue;
+            }
+
             buttonBounds[i] = new Rectangle(buttonX, buttonY, BUTTON_SIZE, BUTTON_SIZE);
 
-            boolean hovered = mouse != null && buttonBounds[i].contains(mouse.getX(), mouse.getY());
+            // Calculate flip scale (0->1 flip effect using sine for smooth easing)
+            // First half: scale shrinks, second half: scale grows
+            float flipProgress = progress < 0.5f
+                    ? 1.0f - (progress * 2.0f)  // 1.0 -> 0.0
+                    : (progress - 0.5f) * 2.0f; // 0.0 -> 1.0
+
+            // Apply easing for smoother animation
+            float scaleX = (float) Math.sin(flipProgress * Math.PI / 2);
+            float alpha = Math.min(1.0f, progress * 2.0f); // Fade in during first half
+
+            // Save original transform and composite
+            java.awt.geom.AffineTransform originalTransform = g.getTransform();
+            Composite originalComposite = g.getComposite();
+
+            // Apply alpha
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+
+            // Apply horizontal scale transform (flip effect)
+            int centerX = buttonX + BUTTON_SIZE / 2;
+            g.translate(centerX, 0);
+            g.scale(scaleX, 1.0);
+            g.translate(-centerX, 0);
+
+            boolean hovered = progress >= 1.0f && mouse != null && buttonBounds[i].contains(mouse.getX(), mouse.getY());
 
             g.setColor(BUTTON_FILL);
             g.fillRoundRect(buttonX, buttonY, BUTTON_SIZE, BUTTON_SIZE, 8, 8);
@@ -246,58 +303,68 @@ public class CardPickOverlay extends Overlay
             g.setStroke(new BasicStroke(2f));
             g.drawRoundRect(buttonX, buttonY, BUTTON_SIZE, BUTTON_SIZE, 8, 8);
 
-            if (buttonImages[i] != null)
-            {
-                int imgX = buttonX + (BUTTON_SIZE - IMAGE_SIZE) / 2;
-                int imgY = buttonY + 14;
-                g.drawImage(buttonImages[i], imgX, imgY, IMAGE_SIZE, IMAGE_SIZE, null);
+            // Only show content after flip midpoint
+            if (progress > 0.5f) {
+                if (buttonImages[i] != null) {
+                    int imgX = buttonX + (BUTTON_SIZE - IMAGE_SIZE) / 2;
+                    int imgY = buttonY + 14;
+                    g.drawImage(buttonImages[i], imgX, imgY, IMAGE_SIZE, IMAGE_SIZE, null);
+                }
+
+                if (buttonLabels[i] != null) {
+                    g.setColor(TEXT_COLOR);
+                    drawWrappedText(g, buttonLabels[i], buttonX, buttonY + BUTTON_SIZE - 40, BUTTON_SIZE - 4, fm);
+                }
+
+                if (buttonTypeNames[i] != null) {
+                    g.setColor(TYPE_COLOR);
+                    g.setFont(new Font("SansSerif", Font.PLAIN, 9));
+                    FontMetrics typeFm = g.getFontMetrics();
+                    int typeX = buttonX + (BUTTON_SIZE - typeFm.stringWidth(buttonTypeNames[i])) / 2;
+                    int typeY = buttonY + BUTTON_SIZE - 6;
+                    g.drawString(buttonTypeNames[i], typeX, typeY);
+                    g.setFont(new Font("SansSerif", Font.BOLD, 10));
+                }
             }
 
-            if (buttonLabels[i] != null)
-            {
-                g.setColor(TEXT_COLOR);
-                drawWrappedText(g, buttonLabels[i], buttonX, buttonY + BUTTON_SIZE - 40, BUTTON_SIZE - 4, fm);
-            }
-
-            if (buttonTypeNames[i] != null)
-            {
-                g.setColor(TYPE_COLOR);
-                g.setFont(new Font("SansSerif", Font.PLAIN, 9));
-                FontMetrics typeFm = g.getFontMetrics();
-                int typeX = buttonX + (BUTTON_SIZE - typeFm.stringWidth(buttonTypeNames[i])) / 2;
-                int typeY = buttonY + BUTTON_SIZE - 6;
-                g.drawString(buttonTypeNames[i], typeX, typeY);
-                g.setFont(new Font("SansSerif", Font.BOLD, 10)); // Reset font
-            }
+            // Restore original state
+            g.setTransform(originalTransform);
+            g.setComposite(originalComposite);
         }
+
+        // Draw hover description text at bottom of panel
+        String desc = "Select a card you wish to unlock.";
+        if (hoveredIndex >= 0 && buttonDescriptions[hoveredIndex] != null) {
+            desc = buttonDescriptions[hoveredIndex];
+        }
+
+        g.setColor(TEXT_COLOR);
+        g.setFont(new Font("SansSerif", Font.PLAIN, 11));
+        FontMetrics descFm = g.getFontMetrics();
+        int descX = panelX + (panelWidth - descFm.stringWidth(desc)) / 2;
+        int descY = panelY + PANEL_PADDING + BUTTON_SIZE + HOVER_AREA_HEIGHT / 2 + descFm.getAscent() / 2;
+        g.drawString(desc, descX, descY);
 
         return null;
     }
 
-    private void drawWrappedText(Graphics2D g, String text, int x, int y, int maxWidth, FontMetrics fm)
-    {
+    private void drawWrappedText(Graphics2D g, String text, int x, int y, int maxWidth, FontMetrics fm) {
         List<String> lines = new ArrayList<>();
         String[] words = text.split(" ");
         StringBuilder currentLine = new StringBuilder();
 
-        for (String word : words)
-        {
+        for (String word : words) {
             String testLine = currentLine.length() == 0 ? word : currentLine + " " + word;
-            if (fm.stringWidth(testLine) <= maxWidth)
-            {
+            if (fm.stringWidth(testLine) <= maxWidth) {
                 currentLine = new StringBuilder(testLine);
-            }
-            else
-            {
-                if (currentLine.length() > 0)
-                {
+            } else {
+                if (currentLine.length() > 0) {
                     lines.add(currentLine.toString());
                 }
                 currentLine = new StringBuilder(word);
             }
         }
-        if (currentLine.length() > 0)
-        {
+        if (currentLine.length() > 0) {
             lines.add(currentLine.toString());
         }
 
@@ -305,8 +372,7 @@ public class CardPickOverlay extends Overlay
         int totalHeight = lines.size() * lineHeight;
         int startY = y + (20 - totalHeight) / 2 + fm.getAscent();
 
-        for (String line : lines)
-        {
+        for (String line : lines) {
             int textX = x + (maxWidth + 4 - fm.stringWidth(line)) / 2;
             g.drawString(line, textX, startY);
             startY += lineHeight;

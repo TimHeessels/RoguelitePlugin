@@ -7,5 +7,7 @@ public interface PackOption {
 
     String getDisplayType();
 
+    String getDescription();
+
     void onChosen(CoinboundPlugin plugin);
 }
