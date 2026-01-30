@@ -190,7 +190,6 @@ public class CoinboundPanel extends PluginPanel {
             long typeUnlockedCount = list.stream()
                     .filter(plugin::isUnlocked)
                     .count();
-            String typeHeader = type + " (" + typeUnlockedCount + "/" + list.size() + ")";
 
             JPanel categoryContent = new JPanel();
             categoryContent.setLayout(new BoxLayout(categoryContent, BoxLayout.Y_AXIS));
@@ -233,6 +232,7 @@ public class CoinboundPanel extends PluginPanel {
                 categoryContent.add(row);
             }
 
+            String typeHeader = type + " (" + typeUnlockedCount + "/" + list.size() + ")";
             CollapsiblePanel categoryPanel = new CollapsiblePanel(typeHeader, categoryContent);
             categoryPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
             panel.add(categoryPanel);

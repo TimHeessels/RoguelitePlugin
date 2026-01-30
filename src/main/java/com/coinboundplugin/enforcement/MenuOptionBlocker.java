@@ -14,6 +14,7 @@ import net.runelite.client.game.ItemManager;
 import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public class MenuOptionBlocker {
     @Inject
@@ -28,6 +29,7 @@ public class MenuOptionBlocker {
     List<String> EQUIP_MENU_OPTIONS = Arrays.asList("wield", "wear", "equip", "hold", "ride", "chill");
     List<String> EAT_MENU_OPTIONS = Arrays.asList("eat", "consume");  //TODO: Check if more needed
     List<String> POTIONS_MENU_OPTIONS = Arrays.asList("drink"); //TODO: Check if more needed
+    List<String> JEWELERY_MENU_OPTIONS = Arrays.asList("necklace", "ring", "amulet", "bracelet");
 
     @Subscribe
     public void onMenuOptionClicked(MenuOptionClicked event) {
@@ -51,12 +53,19 @@ public class MenuOptionBlocker {
         }
 
         // Check spellbook teleports
-        if (isTeleportSpellOption(target) && !plugin.isUnlocked("SpelbookTeleports")) {
+        if (isTeleportSpellOption(option, target) && !plugin.isUnlocked("SpelbookTeleports")) {
             if (event.getMenuAction() == MenuAction.CC_OP ||
                     event.getMenuAction() == MenuAction.CC_OP_LOW_PRIORITY) {
                 event.consume();
                 plugin.ShowPluginChat("<col=ff0000><b>Teleports locked</b></col> Using the spellbook to teleport is not unlocked yet.", 2394);
             }
+            return;
+        }
+
+        // Check jewelery teleports
+        if (isMinigameJeweleryOption(option, target) && !plugin.isUnlocked("TeleportJewelry")) {
+            event.consume();
+            plugin.ShowPluginChat("<col=ff0000><b>Jewelery teleports locked</b></col> Teleporting using jewelery is not unlocked yet.", 2394);
             return;
         }
 
@@ -99,7 +108,7 @@ public class MenuOptionBlocker {
 
         // Check balloon transport
         // TODO: Check if working
-        if (isBaloonTransport(option,target) && !plugin.isUnlocked("BalloonTransport")) {
+        if (isBaloonTransport(option, target) && !plugin.isUnlocked("BalloonTransport")) {
             event.consume();
             plugin.ShowPluginChat("<col=ff0000><b>Balloon transport usage locked</b></col> Using balloon transport is not unlocked yet.", 2394);
             return;
@@ -107,7 +116,7 @@ public class MenuOptionBlocker {
 
         // Check gnome glider
         // TODO: Check if working
-        if (isGnomeGlider(option,target) && !plugin.isUnlocked("GnomeGliders")) {
+        if (isGnomeGlider(option, target) && !plugin.isUnlocked("GnomeGliders")) {
             event.consume();
             plugin.ShowPluginChat("<col=ff0000><b>Gnome glider usage locked</b></col> Using gnome glider is not unlocked yet.", 2394);
         }
@@ -124,12 +133,14 @@ public class MenuOptionBlocker {
         return false;
     }
 
-    private boolean isTeleportSpellOption(String target) {
+    private boolean isTeleportSpellOption(String option, String target) {
         String tgt = target
                 .replaceAll("<.*?>", "")
                 .replaceAll("[^a-z ]", "")
                 .trim();
 
+        if (Objects.equals(target, "home"))
+            return false;
         return tgt.contains("teleport") || tgt.contains("tele group");
     }
 
@@ -138,8 +149,23 @@ public class MenuOptionBlocker {
             return false;
         }
 
-        String opt = option.toLowerCase().trim();
+        String opt = option.trim();
         return (opt.contains("teleport to <col=ff8040>"));
+    }
+
+    private boolean isMinigameJeweleryOption(String option, String target) {
+        if (option == null) {
+            return false;
+        }
+        String opt = option.trim();
+        boolean hasJewelery = false;
+        for (String jewelery : JEWELERY_MENU_OPTIONS) {
+            if (target.toLowerCase().contains(jewelery)) {
+                hasJewelery = true;
+                break;
+            }
+        }
+        return (opt.contains("rub") && hasJewelery);
     }
 
     private boolean isFairyRing(int objectId) {
@@ -194,7 +220,7 @@ public class MenuOptionBlocker {
         }
 
         if (!plugin.isUnlocked("EQUIP_" + slot)) {
-            plugin.ShowPluginChat("<col=ff0000><b>"+slot.getDisplayName() +" slot locked!</b></col> Unlock this slot to be able to equip.", 2394);
+            plugin.ShowPluginChat("<col=ff0000><b>" + slot.getDisplayName() + " slot locked!</b></col> Unlock this slot to be able to equip.", 2394);
             event.consume();
         }
     }
