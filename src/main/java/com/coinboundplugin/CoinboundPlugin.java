@@ -12,16 +12,13 @@ import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import com.coinboundplugin.overlays.CardPickOverlay;
+import com.coinboundplugin.overlays.*;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.coinboundplugin.data.PackChoiceState;
 import com.google.inject.Provides;
 import com.coinboundplugin.data.UnlockType;
 import com.coinboundplugin.enforcement.*;
-import com.coinboundplugin.overlays.FogMapOverlay;
-import com.coinboundplugin.overlays.FogOverlay;
-import com.coinboundplugin.overlays.CoinboundInfoboxOverlay;
 import com.coinboundplugin.pack.PackOption;
 import com.coinboundplugin.pack.SerializablePackOption;
 import com.coinboundplugin.pack.UnlockPackOption;
@@ -36,7 +33,6 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
-import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
@@ -46,6 +42,8 @@ import net.runelite.client.config.ConfigManager;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.util.ImageUtil;
+
+import static net.runelite.client.util.QuantityFormatter.formatNumber;
 
 @Slf4j
 @PluginDescriptor(
@@ -106,13 +104,22 @@ public class CoinboundPlugin extends Plugin {
     private ClientToolbar clientToolbar;
 
     @Inject
-    private FogOverlay fogOverlay;
-
-    @Inject
-    private FogMapOverlay fogMapOverlay;
-
-    @Inject
     CardPickOverlay cardPickOverlay;
+
+    @Inject
+    ShopLockOverlay shopLockOverlay;
+
+    @Inject
+    SpellBookLockOverlay spellTeleportLockOverlay;
+
+    @Inject
+    ItemLockOverlay itemLockOverlay;
+
+    @Inject
+    ProtectionPrayerLockOverlay protectionPrayerLockOverlay;
+
+    @Inject
+    SpecialAttackOverlay specialAttackOverlay;
 
     private CoinboundPanel swingPanel;
     private NavigationButton navButton;
@@ -159,20 +166,77 @@ public class CoinboundPlugin extends Plugin {
     public long currentCoins = 0;
     public int fillerItemsShort;
 
-    public final WorldPoint WorldOrgin =
-            new WorldPoint(3310, 3180, 0);
     public final WorldPoint JailStartingPosition =
             new WorldPoint(3297, 3124, 0);
-    public int wanderRadius = 30;
-    private boolean wasInside = true;
     public SetupStage gamemodeSetupState = SetupStage.DropAllItems;
 
     public enum SetupStage {
         DropAllItems,
         GetFlyers,
-        GoToJail,
         SetupComplete
     }
+
+    public boolean isItemBlocked(int itemId) {
+        return false; //TODO: Check if some items need to have a lock icon overlay
+    }
+
+    public List<Integer> ALCHEMY_WIDGETS = List.of(14286892, 14286869);
+    public List<Integer> teleportWidgetIDs = List.of(
+            // Normal spellbook
+            14286874, //Lumbridge
+            14286871, //Varrock
+            14286877, //Falador
+            14286879, //House
+            14286882, //Camelot
+            14286884, //Kourend
+            14286889, //Ardougne
+            14286891, //Civitas
+            14286895, //Watchtower
+            14286902, //Trollheim
+            14286905, //Ape atoll
+            14286928, //Boat
+            // Ancient spellbook
+            14286945, //Paddewwa
+            14286946, //Senntisten
+            14286947, //Kharyrll
+            14286948, //Lassar
+            14286949, //Dareeyak
+            14286950, //Carrallangar
+            14286921, //Target
+            14286951, //Annakarl
+            14286952, //Ghorrock
+            //Lunar spellbook
+            14286961, //Moonclan
+            14286962, //Moonclan group
+            14286997, //ourania
+            14286965, //waterbirth
+            14286966, //waterbrith group
+            14286969, //barbarian
+            14286970, //barbarian group
+            14286973, //khazard
+            14286974,  //khazard group
+            14286981, //fishing guild
+            14286921, //target
+            14286982, //fishing guild group
+            14286984, //catherby
+            14286985,  //catherby group
+            14286987, //ice plateau
+            14286988,  //ice plateau group
+            //Arceuus spellbook
+            14287000, //library
+            14287004, //draynor
+            14287016, //battlefront
+            14287006, //mind altar
+            14287007, //respawn
+            14287008, //salve graveyard
+            14287009, //frankenstrain castle
+            14287010, //west ardy
+            14287011, //harmony
+            14287012, //cemetary
+            14287014, //barrows
+            14286921, //target
+            14287015 //ape atoll dungeon
+    );
 
     @Provides
     CoinboundConfig provideConfig(ConfigManager configManager) {
@@ -193,9 +257,12 @@ public class CoinboundPlugin extends Plugin {
         }
 
         overlayManager.add(overlay);
-        overlayManager.add(fogOverlay);
-        overlayManager.add(fogMapOverlay);
         overlayManager.add(cardPickOverlay);
+        overlayManager.add(spellTeleportLockOverlay);
+        overlayManager.add(itemLockOverlay);
+        overlayManager.add(shopLockOverlay);
+        overlayManager.add(protectionPrayerLockOverlay);
+        overlayManager.add(specialAttackOverlay);
         cardPickOverlay.start();
 
         eventBus.register(skillBlocker);
@@ -276,7 +343,6 @@ public class CoinboundPlugin extends Plugin {
         equipmentSlotBlocker.refreshAll();
         questBlocker.refreshAll();
         clientThread.invoke(inventoryBlocker::redrawInventory);
-        wanderRadius = GetWanderRange();
 
         if (swingPanel != null)
             swingPanel.refresh();
@@ -332,9 +398,12 @@ public class CoinboundPlugin extends Plugin {
         previousXp.clear();
 
         overlayManager.remove(overlay);
-        overlayManager.remove(fogOverlay);
-        overlayManager.remove(fogMapOverlay);
         overlayManager.remove(cardPickOverlay);
+        overlayManager.remove(spellTeleportLockOverlay);
+        overlayManager.remove(itemLockOverlay);
+        overlayManager.remove(shopLockOverlay);
+        overlayManager.remove(protectionPrayerLockOverlay);
+        overlayManager.remove(specialAttackOverlay);
         cardPickOverlay.stop();
 
         eventBus.unregister(skillBlocker);
@@ -359,18 +428,14 @@ public class CoinboundPlugin extends Plugin {
         log.debug("Runelite config changes!");
 
         //Only refresh all content on actual changes
-        if (Objects.equals(event.getKey(), "currentPoints"))
-            return;
-        if (Objects.equals(event.getKey(), "illegalXPGained"))
-            return;
-        if (Objects.equals(event.getKey(), "seenItemIds"))
-            return;
-
-        RefreshAllBlockers();
+        if (Objects.equals(event.getKey(), "packsBought") || Objects.equals(event.getKey(), "unlockedIds") || Objects.equals(event.getKey(), "peakWealth"))
+            RefreshAllBlockers();
     }
 
     @Subscribe
     public void onItemContainerChanged(ItemContainerChanged event) {
+
+        Debug("Container changed");
         if (event.getContainerId() != InventoryID.INVENTORY.getId()) {
             return;
         }
@@ -390,85 +455,64 @@ public class CoinboundPlugin extends Plugin {
             return;
         }
 
-        //TODO: Show all notifications instead of only the first if multiple brackets are passed
         currentCoins = getCoinsInInventory();
-        Debug("currentCoins " + currentCoins);
-        int coinsRequiredForNextPack = (int) peakCoinsRequiredForPack(getPackBought() + getAvailablePacksToBuy() + 1);
-        if (currentCoins >= coinsRequiredForNextPack) {
+        Debug("Current coins: " + currentCoins);
+
+        long prevPeak = config.peakWealth();
+        if (currentCoins <= prevPeak)
+            return;
+
+        int packIndex = getPackBought() + getAvailablePacksToBuy() + 1;
+
+        int reached = 0;
+        long lastReq = 0;
+
+        // count how many thresholds are now reachable
+        while (currentCoins >= (lastReq = peakCoinsRequiredForPack(packIndex))) {
+            // only count ones you haven't already "passed" before
+            if (lastReq > prevPeak)
+                reached++;
+
+            packIndex++;
+        }
+
+        if (reached > 1) {
             config.peakWealth(currentCoins);
-            ShowPluginChat("<col=329114><b>Bracket " + coinsRequiredForNextPack + " gp reached! </b></col> You can open a new booster pack!", 3924);
+            ShowPluginChat(
+                    "<col=329114><b>" + reached + " new brackets reached!</b></col> Latest: "
+                            + formatNumber(lastReq) + " gp. You can open new booster packs!",
+                    3924
+            );
+        } else if (reached == 1) {
+            config.peakWealth(currentCoins);
+            ShowPluginChat(
+                    "<col=329114><b>New bracket reached!</b></col> "
+                            + formatNumber(lastReq) + " gp. You can open new booster pack!",
+                    3924
+            );
         }
-    }
-
-    @Subscribe
-    public void onGameTick(GameTick tick) {
-        if (gamemodeSetupState == SetupStage.GoToJail) {
-            Player player = client.getLocalPlayer();
-            if (player == null || WorldOrgin == null) {
-                return;
-            }
-            WorldPoint pos = player.getWorldLocation();
-            int dist = pos.distanceTo(JailStartingPosition);
-            if (dist < 2) {
-                gamemodeSetupState = SetupStage.SetupComplete;
-                configManager.setConfiguration(CoinboundConfig.GROUP, "setupStage", gamemodeSetupState.name());
-                ShowPluginChat("<col=329114><b>Welcome to Coinbound Roguelite Mode! </b></col> Your adventure begins now.", 3924);
-                RefreshAllBlockers();
-            }
-            return;
-        }
-        if (gamemodeSetupState != CoinboundPlugin.SetupStage.SetupComplete)
-            return;
-
-        //-1 is all areas unlocked
-        if (wanderRadius == -1)
-            return;
-        Player player = client.getLocalPlayer();
-        if (player == null || WorldOrgin == null) {
-            return;
-        }
-
-        WorldPoint pos = player.getWorldLocation();
-        if (pos.getPlane() != 0) {
-            wasInside = true; // treat as always allowed
-            return;
-        }
-
-        int dist = pos.distanceTo(WorldOrgin);
-        boolean isInside = dist <= wanderRadius;
-
-        if (!isOverworldSurface(player))
-            isInside = false;
-
-        WorldView worldView = client.getTopLevelWorldView();
-        if (worldView == null)
-            isInside = false;
-
-        if (wasInside && !isInside) {
-            ShowPluginChat("<col=ff0000><b>Your house arrest device starts beeping!</b></col> Return to your unlocked area or unlock more distance.", 2394);
-        } else if (!wasInside && isInside) {
-            ShowPluginChat("Your house arrest device stops beeping.", -1);
-        }
-        wasInside = isInside;
     }
 
     public void setFillerItemsShortAmount(int amount) {
         fillerItemsShort = amount;
         if (fillerItemsShort <= 0 && gamemodeSetupState == SetupStage.GetFlyers) {
-            gamemodeSetupState = SetupStage.GoToJail;
+            ShowPluginChat("<col=329114><b>Inventory filled! </b></col> You're now 'free' to start your adventure!", 3924);
+            gamemodeSetupState = SetupStage.SetupComplete;
             configManager.setConfiguration(CoinboundConfig.GROUP, "setupStage", gamemodeSetupState.name());
-            ShowPluginChat("<col=329114><b>Inventory filled! </b></col> Please head to the Al Kharid jail (the one in Shantey pass) to start your adventure.", 3924);
+            RefreshAllBlockers();
         }
     }
 
     public long getCoinsInInventory() {
         ItemContainer inventory = client.getItemContainer(InventoryID.INVENTORY);
+        Debug("inventory: " + inventory);
         if (inventory == null) {
             return 0;
         }
 
         for (Item item : inventory.getItems()) {
             if (item.getId() == ItemID.COINS) {
+                Debug("coins found: ");
                 return item.getQuantity();
             }
         }
@@ -508,18 +552,18 @@ public class CoinboundPlugin extends Plugin {
         if (!isSkillUnlocked(skill)) {
             long newValue = delta + config.illegalXPGained();
             config.illegalXPGained(newValue);
-            showChatMessage("You've earned XP in " + skill.getName() + " but did not have the skill unlocked!");
-            showChatMessage("You now have a total of " + newValue + " illegal XP.");
+            ShowPluginChat("<col=ff0000><b>" + skill.getName() + " locked!</b></col> You've earned XP in " + skill.getName() + " but did not have the skill unlocked!", 2394);
+            ShowPluginChat("You now have a total of " + newValue + " illegal XP.", -1);
             return;
         }
     }
 
     public long peakCoinsRequiredForPack(int packIndex) {
-        // packIndex starts at 1
-        double A = 5.0;
-        double B = 2.1;
+        double A = 0.45;
+        double B = 3.1;
+        double C = 6.0;
 
-        return (long) Math.floor(A * Math.pow(packIndex, B));
+        return (long) Math.floor(A * Math.pow(packIndex + C, B));
     }
 
     public int getTotalUnlockedPacks(long peakCoins) {
@@ -538,10 +582,6 @@ public class CoinboundPlugin extends Plugin {
         return Math.max(0, unlocked - config.packsBought());
     }
 
-    private void showChatMessage(String message) {
-        client.addChatMessage(net.runelite.api.ChatMessageType.GAMEMESSAGE, "", message, null);
-    }
-
     public void onBuyPackClicked() {
         if (clientThread == null || packChoiceState == PackChoiceState.PACKGENERATED)
             return;
@@ -551,29 +591,36 @@ public class CoinboundPlugin extends Plugin {
             if (getAvailablePacksToBuy() < 1)
                 return;
 
-            config.packsBought(config.packsBought() + 1);
 
             if (!statsInitialized) {
-                //TODO: Notify user to relog
                 if (swingPanel != null) {
                     swingPanel.refresh();
                 }
                 return;
             }
-            generatePackOptions();
 
-            // Refresh panel UI
-            if (swingPanel != null) {
-                swingPanel.refresh();
+            if (!generatePackOptions()) {
+                ShowPluginChat("<col=ff0000><b>Cant make a pack!</b></col> There are 3 or less available cards (with requirements met)!", 2394);
+                return;
             }
-
-            client.addChatMessage(
-                    ChatMessageType.GAMEMESSAGE,
-                    "",
-                    "Bought a pack",
-                    null
-            );
+            PackBoughtSuccess();
         });
+    }
+
+    private void PackBoughtSuccess() {
+        config.packsBought(config.packsBought() + 1);
+
+        // Refresh panel UI
+        if (swingPanel != null) {
+            swingPanel.refresh();
+        }
+
+        client.addChatMessage(
+                ChatMessageType.GAMEMESSAGE,
+                "",
+                "Bought a pack",
+                null
+        );
     }
 
     public void onPackOptionSelected(PackOption option) {
@@ -596,7 +643,6 @@ public class CoinboundPlugin extends Plugin {
             return false;
         }
 
-        // Already unlocked → should NOT appear as pack option
         if (isUnlocked(unlock)) {
             return false;
         }
@@ -612,7 +658,6 @@ public class CoinboundPlugin extends Plugin {
                     return false;
                 }
             } catch (Exception e) {
-                // Defensive: never let UI crash because of requirements
                 return false;
             }
         }
@@ -701,31 +746,37 @@ public class CoinboundPlugin extends Plugin {
         return removeUnlock(randomUnlockId);
     }
 
-    private void generatePackOptions() {
+    private boolean generatePackOptions() {
         List<Unlock> locked = unlockRegistry.getAll().stream()
                 .filter(u -> !unlockedIds.contains(u.getId()))
                 .filter(this::canAppearAsPackOption)
                 .collect(Collectors.toList());
+
         Collections.shuffle(locked);
 
         int optionCount = Math.min(4, locked.size());
         Set<UnlockType> usedUnlockTypes = new HashSet<>();
 
-        currentPackOptions = IntStream.range(0, optionCount)
-                .mapToObj(i -> {
-                    Unlock unlock = pickUnlockWithDiversityBias(locked, usedUnlockTypes);
-                    usedUnlockTypes.add(unlock.getType());
-                    return new UnlockPackOption(unlock);
+        currentPackOptions = new ArrayList<>(optionCount);
+        for (int i = 0; i < optionCount; i++) {
+            Unlock unlock = pickUnlockWithDiversityBias(locked, usedUnlockTypes);
+            if (unlock == null)
+                break;
 
-                })
-                .collect(Collectors.toList());
+            usedUnlockTypes.add(unlock.getType());
+            currentPackOptions.add(new UnlockPackOption(unlock));
+        }
 
+        int count = currentPackOptions.size();
+
+        if (count < 4)
+            return false;
 
         packChoiceState = PackChoiceState.PACKGENERATED;
         SetupCardButtons();
 
-        // Save to config for when users reload client while cards are generated
         savePackOptionsToConfig();
+        return true;
     }
 
     private void savePackOptionsToConfig() {
@@ -767,19 +818,6 @@ public class CoinboundPlugin extends Plugin {
         );
         if (soundEffect != -1)
             client.playSoundEffect(soundEffect);
-    }
-
-    public boolean isOverworldSurface(Player player) {
-        if (player == null) {
-            return false;
-        }
-
-        if (player.getWorldLocation().getPlane() != 0) {
-            return false;
-        }
-
-        WorldView worldView = client.getTopLevelWorldView();
-        return worldView != null && !worldView.isInstance();
     }
 }
 

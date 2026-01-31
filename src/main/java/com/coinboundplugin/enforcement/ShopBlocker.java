@@ -69,5 +69,6 @@ public class ShopBlocker {
 
     private void blockShop(ShopCategory category) {
         plugin.ShowPluginChat("<col=ff0000><b>"+category.getDisplayName()+" category is locked!</b></col> You have not unlocked access to this shop yet.", 2394);
+
     }
 }

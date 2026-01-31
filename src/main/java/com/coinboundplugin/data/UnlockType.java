@@ -12,7 +12,6 @@ public enum UnlockType
     Consumable,
     InventorySlots,
     EquipmentSlots,
-    Currency,
-    WanderRange
+    Other
 }
 

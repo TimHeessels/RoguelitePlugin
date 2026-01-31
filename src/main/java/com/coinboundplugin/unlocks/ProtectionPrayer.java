@@ -6,22 +6,25 @@ import com.coinboundplugin.requirements.AppearRequirement;
 import javax.swing.*;
 import java.util.List;
 
-public class ConsumableUnlock implements Unlock {
+public class ProtectionPrayer implements Unlock {
     private final String id;
+    private final String name;
     private final Icon icon;
-    private final String displayName;
     private final String description;
+    private final List<AppearRequirement> requirements;
 
-    public ConsumableUnlock(String id, String displayName, Icon icon, String description) {
+    public ProtectionPrayer(String id, String name, Icon icon, String description,
+                            List<AppearRequirement> requirements) {
         this.id = id;
-        this.displayName = displayName;
+        this.name = name;
         this.icon = icon;
         this.description = description;
+        this.requirements = requirements;
     }
 
     @Override
     public UnlockType getType() {
-        return UnlockType.Consumable;
+        return UnlockType.Clues;
     }
 
     @Override
@@ -31,7 +34,7 @@ public class ConsumableUnlock implements Unlock {
 
     @Override
     public String getDisplayName() {
-        return displayName;
+        return name;
     }
 
     @Override
@@ -45,7 +48,8 @@ public class ConsumableUnlock implements Unlock {
     }
 
     @Override
-    public List<AppearRequirement> getRequirements() {
-        return List.of();
+    public List<AppearRequirement> getRequirements()
+    {
+        return requirements;
     }
 }

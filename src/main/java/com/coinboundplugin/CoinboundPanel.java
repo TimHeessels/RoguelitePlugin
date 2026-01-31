@@ -21,6 +21,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.net.URL;
+import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
 
@@ -34,6 +35,7 @@ public class CoinboundPanel extends PluginPanel {
     List<PackOptionButton> optionButtons = new ArrayList<>();
 
     private JPanel rulesPanel;
+    private JPanel coinBracketsPanel;
     private Map<UnlockType, List<Unlock>> cachedByType;
     private JPanel unlocksContentPanel;
 
@@ -76,7 +78,6 @@ public class CoinboundPanel extends PluginPanel {
             return;
         }
 
-        // Always show rules panel
         String rulesHtml = "<html>"
                 + "<b>Booster pack rules</b><br>"
                 + "Collect as many coins as you can in your inventory.<br>"
@@ -107,8 +108,39 @@ public class CoinboundPanel extends PluginPanel {
         content.add(rulesPanel);
         content.add(Box.createVerticalStrut(12));
 
-        // Always show unlocks section
-        updateUnlocksSection(content);
+        List<Unlock> allUnlocks = new ArrayList<>(plugin.getUnlockRegistry().getAll());
+
+
+        /* This looks cool but tanks fps on update panel
+        StringBuilder coinBracketsHtml = new StringBuilder("<html>"
+                + "<b>Coin brackets</b><br>");
+        coinBracketsHtml.append("Unlock a new card pack each time you reach a new peak wealth:<br><br>");
+
+        long totalUnlocks = allUnlocks.size();
+        boolean isCurrent = true;
+        for (int i = 0; i < totalUnlocks; i++) {
+            long bracketValue = plugin.peakCoinsRequiredForPack(i);
+            long peakCoins = plugin.getPeakCoins();
+            String htmlColor = bracketValue >= peakCoins ? "968481" : "B6EB88";
+            if (bracketValue > peakCoins && isCurrent) {
+                isCurrent = false;
+                htmlColor = "F2A900";
+            }
+            NumberFormat nf = NumberFormat.getInstance(Locale.US);
+            String formatValue = nf.format(bracketValue);
+            coinBracketsHtml.append("<span style=\"color: ").append(htmlColor).append("\">• ").append(formatValue).append("</span><br>");
+        }
+
+        coinBracketsHtml.append("</html>");
+        coinBracketsPanel = new CollapsiblePanel("Coin brackets (long list)", new JLabel(coinBracketsHtml.toString()));
+        coinBracketsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        content.add(Box.createVerticalStrut(6));
+        content.add(coinBracketsPanel);
+        content.add(Box.createVerticalStrut(12));
+
+         */
+
+        updateUnlocksSection(content, allUnlocks);
 
         content.add(Box.createVerticalStrut(12));
         content.add(new
@@ -118,13 +150,11 @@ public class CoinboundPanel extends PluginPanel {
 
                 JLabel("https://game-icons.net"));
 
-
         revalidate();
-
         repaint();
     }
 
-    private void updateUnlocksSection(JPanel content) {
+    private void updateUnlocksSection(JPanel content, List<Unlock> all) {
         if (plugin.getUnlockRegistry() == null) {
             return;
         }
@@ -140,7 +170,6 @@ public class CoinboundPanel extends PluginPanel {
         }
 
         Map<UnlockType, List<Unlock>> byType = new EnumMap<>(UnlockType.class);
-        List<Unlock> all = new ArrayList<>(plugin.getUnlockRegistry().getAll());
         all.sort(Comparator.comparing(Unlock::getType).thenComparing(Unlock::getDisplayName));
 
         for (Unlock unlock : all) {

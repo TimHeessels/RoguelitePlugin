@@ -36,8 +36,6 @@ public class InventoryBlocker {
 
     private Widget invUpdateWidget;
 
-    private static final int TOTAL_ROWS = 8;
-
     public void redrawInventory() {
         clientThread.invokeLater(() -> {
             client.runScript(914, -2147483644, 1130, 4);
@@ -96,28 +94,6 @@ public class InventoryBlocker {
             replaceInventory(client.getWidget(ComponentID.INVENTORY_CONTAINER));
         }
     }
-
-    /* Unused for now
-    @Subscribe
-    public void onConfigChanged(ConfigChanged event) {
-        if (event.getGroup().equals(SlotlessConfig.GROUP)) {
-            String key = event.getKey();
-            if (getSpendableSlots() < 0) {
-                configManager.setConfiguration(SlotlessConfig.GROUP, event.getKey(), event.getOldValue());
-                clientThread.invoke(this::warningNotEnoughSlots);
-                return;
-            }
-            if (key.equals("inventorySlotUnlockCount")) {
-                if (event.getOldValue() != null && config.inventorySlotUnlockCount() > Integer.parseInt(event.getOldValue())) {
-                    clientThread.invoke(() -> openPopUp("Slot Unlocked", String.format("New slot:<br><br><col=ffffff>%s Inventory Slots Unlocked</col>", config.inventorySlotUnlockCount())));
-                }
-            } else if (key.endsWith("Unlocked") && event.getNewValue() != null && event.getNewValue().equals(Boolean.TRUE.toString())) {
-                clientThread.invoke(() -> openPopUp("Equipment Unlocked", String.format("New slot:<br><br><col=ffffff>%s</col>", StringUtils.capitalize(key.substring(0, key.length() - 8)))));
-            }
-            clientThread.invoke(this::redrawInventory);
-        }
-    }
-     */
 
     private void replaceInventory(Widget w) {
 

@@ -2,12 +2,12 @@ package com.coinboundplugin.data;
 
 public enum ClueTier
 {
-    BEGINNER("Beginner clues"),
-    EASY("Easy clues"),
-    MEDIUM("Medium clues"),
-    HARD("Hard clues"),
-    ELITE("Elite clues"),
-    MASTER("Master clues");
+    BEGINNER("Reward casket (Beginner)"),
+    EASY("Reward casket (Easy)"),
+    MEDIUM("Reward casket (Medium)"),
+    HARD("Reward casket (Hard)"),
+    ELITE("Reward casket (Elite)"),
+    MASTER("Reward casket (Master)");
 
     private final String displayName;
 

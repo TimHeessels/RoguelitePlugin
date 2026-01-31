@@ -6,15 +6,14 @@ import com.coinboundplugin.requirements.AppearRequirement;
 import javax.swing.*;
 import java.util.List;
 
-public class HouseArrestExpansion implements Unlock {
+public class Other implements Unlock {
     private final String id;
     private final String name;
     private final Icon icon;
     private final String description;
     private final List<AppearRequirement> requirements;
 
-    public HouseArrestExpansion(String id, String name, Icon icon, String description,
-                                List<AppearRequirement> requirements) {
+    public Other(String id, String name, Icon icon, String description, List<AppearRequirement> requirements) {
         this.id = id;
         this.name = name;
         this.icon = icon;
@@ -24,7 +23,7 @@ public class HouseArrestExpansion implements Unlock {
 
     @Override
     public UnlockType getType() {
-        return UnlockType.WanderRange;
+        return UnlockType.Other;
     }
 
     @Override

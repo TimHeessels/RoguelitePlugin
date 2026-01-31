@@ -39,13 +39,6 @@ public class CoinboundInfoboxOverlay extends Overlay {
                     .build());
             return panelComponent.render(graphics);
         }
-        //Go fill up inventory with flyers
-        if (plugin.gamemodeSetupState == CoinboundPlugin.SetupStage.GoToJail) {
-            panelComponent.getChildren().add(LineComponent.builder()
-                    .left("To start the game mode, please enter the Al Kharid jail (the one in Shantey pass).")
-                    .build());
-            return panelComponent.render(graphics);
-        }
         if (plugin.fillerItemsShort < 0) {
             panelComponent.getChildren().add(LineComponent.builder()
                     .left("You can drop " + Math.abs(plugin.fillerItemsShort) + " flyers as you have too many.")
@@ -57,10 +50,10 @@ public class CoinboundInfoboxOverlay extends Overlay {
 
         int targetTier = packsBought + availablePacks + 1;
 
-        long previous = plugin.peakCoinsRequiredForPack(targetTier - 1);
+        long previous = (targetTier <= 1) ? 0 : plugin.peakCoinsRequiredForPack(targetTier - 1);
         long next = plugin.peakCoinsRequiredForPack(targetTier);
 
-        long barGoal = next - previous;
+        long barGoal = Math.max(1, next - previous);
         long barProgress = Math.max(0, currentCoins - previous);
 
         if (plugin.getAvailablePacksToBuy() > 1) {
