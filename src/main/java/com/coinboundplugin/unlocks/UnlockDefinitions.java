@@ -24,7 +24,6 @@ public final class UnlockDefinitions {
     ) {
 
         registerClueTiers(registry);
-        /*
         registerProtectionPrayers(registry);
         registerOther(registry);
         registerSkills(registry, skillIconManager);
@@ -36,7 +35,6 @@ public final class UnlockDefinitions {
         registerQuests(registry);
         registerEquipmentSlots(registry);
         registerRestoration(registry);
-         */
     }
 
     private static void registerOther(UnlockRegistry registry) {

@@ -72,7 +72,7 @@ public class CoinboundPanel extends PluginPanel {
 
         if (!plugin.statsInitialized) {
             content.add(new JLabel("Please login to see"));
-            content.add(new JLabel("your roguelite progress."));
+            content.add(new JLabel("what you can unlock!"));
             revalidate();
             repaint();
             return;
@@ -87,7 +87,6 @@ public class CoinboundPanel extends PluginPanel {
                 + "You can only pick one of the four cards, so pick wisely.<br>"
                 + "<b>Core rules</b><br>"
                 + "You can only perform actions that are not currently locked by the game mode, at the start of the game you cannot:<br>"
-                + "• Go outside of the indicated area. (You're wearing a ankle monitor)<br>"
                 + "• Gain XP in any skill except hitpoints. (Hitpoints is unlocked at the start)<br>"
                 + "• Complete quests. You unlock quests per year, starting at 2002.<br>"
                 + "• Equip items. You unlock each slot seperatly.<br>"
