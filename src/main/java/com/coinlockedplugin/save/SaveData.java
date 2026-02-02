@@ -9,12 +9,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class SaveData
-{
+public class SaveData {
     public int version = 1;
 
     // pack UI / state
-    public List<PackOption> currentPackOptions = new ArrayList<>();
+    public List<String> currentPackOptionIds = new ArrayList<>();
     public PackChoiceState packChoiceState = PackChoiceState.NONE;
     public SetupStage setupStage = SetupStage.DropAllItems;
 

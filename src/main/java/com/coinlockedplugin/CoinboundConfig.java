@@ -17,4 +17,14 @@ public interface CoinboundConfig extends Config {
     default boolean showOverlay() {
         return true;
     }
+
+    //Option to hide card panel and buttons
+    @ConfigItem(
+            keyName = "showCardMenus",
+            name = "Show Card menus",
+            description = "Show/hide the open pack button and card picker"
+    )
+    default boolean showCardMenus() {
+        return true;
+    }
 }

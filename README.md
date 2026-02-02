@@ -63,6 +63,9 @@ Nearly all of these are enforced by the plugin, meaning you will get a message w
   * Teleport Jewelry
   * Canoes
 
+## Save files
+Can be found in your .runelite folder under "coinlockedPlugin".<br>
+C:\Users\name\.runelite\coinlockedPlugin
 
 ## Screenshots
 ![lockedGear](assets/lockedGear.png)

@@ -26,6 +26,7 @@ public class CardPickOverlay extends Overlay {
     private static final int BUTTON_SPACING = 15;
     private static final int PANEL_PADDING = 20;
     private static final int IMAGE_SIZE = 30;
+    private static final int HEADER_HEIGHT = 40;
 
     private static final Color TYPE_COLOR = new Color(180, 160, 120);
     private static final Color PANEL_FILL = new Color(40, 32, 24, 240);
@@ -46,7 +47,7 @@ public class CardPickOverlay extends Overlay {
     private final BufferedImage[] buttonImages = new BufferedImage[4];
     private final Runnable[] buttonCallbacks = new Runnable[4];
     private final String[] buttonDescriptions = new String[4];
-    private static final int HOVER_AREA_HEIGHT = 30;
+    private static final int BOTTOM_AREA_HEIGHT = 30;
 
     //Animation
     private long animationStartTime = 0;
@@ -98,6 +99,9 @@ public class CardPickOverlay extends Overlay {
             if (plugin.getPackChoiceState() != PackChoiceState.PACKGENERATED) {
                 return -1;
             }
+            if (!plugin.getConfig().showCardMenus())
+                return -1;
+
             for (int i = 0; i < buttonBounds.length; i++) {
                 if (buttonBounds[i] != null && buttonBounds[i].contains(e.getPoint())) {
                     return i;
@@ -107,6 +111,8 @@ public class CardPickOverlay extends Overlay {
         }
 
         private boolean isHoveringBuyPackButton(MouseEvent e) {
+            if (!plugin.getConfig().showCardMenus())
+                return false;
             return plugin.getPackChoiceState() == PackChoiceState.NONE
                     && plugin.getAvailablePacksToBuy() > 0
                     && buyPackButtonBounds != null
@@ -115,6 +121,8 @@ public class CardPickOverlay extends Overlay {
 
         @Override
         public MouseEvent mousePressed(MouseEvent e) {
+            if (!plugin.getConfig().showCardMenus())
+                return e;
             if (getHoveredButtonIndex(e) >= 0 || isHoveringBuyPackButton(e)) {
                 e.consume();
             }
@@ -123,6 +131,8 @@ public class CardPickOverlay extends Overlay {
 
         @Override
         public MouseEvent mouseReleased(MouseEvent e) {
+            if (!plugin.getConfig().showCardMenus())
+                return e;
             if (isHoveringBuyPackButton(e)) {
                 log.info("Buy Pack button clicked");
                 plugin.onBuyPackClicked();
@@ -141,6 +151,8 @@ public class CardPickOverlay extends Overlay {
 
         @Override
         public MouseEvent mouseClicked(MouseEvent e) {
+            if (!plugin.getConfig().showCardMenus())
+                return e;
             if (getHoveredButtonIndex(e) >= 0 || isHoveringBuyPackButton(e)) {
                 e.consume();
             }
@@ -149,6 +161,8 @@ public class CardPickOverlay extends Overlay {
 
         @Override
         public MouseEvent mouseDragged(MouseEvent e) {
+            if (!plugin.getConfig().showCardMenus())
+                return e;
             if (getHoveredButtonIndex(e) >= 0 || isHoveringBuyPackButton(e)) {
                 e.consume();
             }
@@ -186,6 +200,9 @@ public class CardPickOverlay extends Overlay {
 
     @Override
     public Dimension render(Graphics2D g) {
+        if (!plugin.getConfig().showCardMenus()) {
+            return null;
+        }
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         int vpX = client.getViewportXOffset();
@@ -229,7 +246,7 @@ public class CardPickOverlay extends Overlay {
         int panelY = vpY + 50;
         Point mouse = client.getMouseCanvasPosition();
 
-        int panelHeight = BUTTON_SIZE + (PANEL_PADDING * 2) + HOVER_AREA_HEIGHT;
+        int panelHeight = BUTTON_SIZE + (PANEL_PADDING * 2) + BOTTOM_AREA_HEIGHT + HEADER_HEIGHT;
 
         // Find hovered card index
         int hoveredIndex = -1;
@@ -251,9 +268,25 @@ public class CardPickOverlay extends Overlay {
         g.setStroke(new BasicStroke(2f));
         g.drawRoundRect(panelX, panelY, panelWidth, panelHeight, 10, 10);
 
+        String headerText = "Choose a new unlock";
+        g.setColor(TEXT_COLOR);
+        g.setFont(new Font("SansSerif", Font.BOLD, 14));
+        FontMetrics headerFm = g.getFontMetrics();
+        int headerX = panelX + (panelWidth - headerFm.stringWidth(headerText)) / 2;
+        int headerY = panelY + PANEL_PADDING + headerFm.getAscent();
+        g.drawString(headerText, headerX, headerY);
+
+        String leftInfo = "Cards in deck: " + plugin.getPossibleUnlockablesCount();
+        String rightInfo = "Restricted cards: " + plugin.getRestrictedUnlockablesCount();
+        g.setFont(new Font("SansSerif", Font.PLAIN, 10));
+        FontMetrics infoFm = g.getFontMetrics();
+        int leftInfoX = panelX + PANEL_PADDING;
+        int rightInfoX = panelX + panelWidth - PANEL_PADDING - infoFm.stringWidth(rightInfo);
+        g.drawString(leftInfo, leftInfoX, headerY);
+        g.drawString(rightInfo, rightInfoX, headerY);
 
         int buttonStartX = panelX + PANEL_PADDING;
-        int buttonY = panelY + PANEL_PADDING;
+        int buttonY = panelY + PANEL_PADDING + HEADER_HEIGHT;
 
         g.setFont(new Font("SansSerif", Font.BOLD, 10));
         FontMetrics fm = g.getFontMetrics();
@@ -333,7 +366,7 @@ public class CardPickOverlay extends Overlay {
         }
 
         // Draw hover description text at bottom of panel
-        String desc = "Select a card you wish to unlock.";
+        String desc = "Hover over a card to see more information.";
         if (hoveredIndex >= 0 && buttonDescriptions[hoveredIndex] != null) {
             desc = buttonDescriptions[hoveredIndex];
         }
@@ -342,7 +375,7 @@ public class CardPickOverlay extends Overlay {
         g.setFont(new Font("SansSerif", Font.PLAIN, 11));
         FontMetrics descFm = g.getFontMetrics();
         int descX = panelX + (panelWidth - descFm.stringWidth(desc)) / 2;
-        int descY = panelY + PANEL_PADDING + BUTTON_SIZE + HOVER_AREA_HEIGHT / 2 + descFm.getAscent() / 2;
+        int descY = panelY + PANEL_PADDING + HEADER_HEIGHT + BUTTON_SIZE + BOTTOM_AREA_HEIGHT / 2 + descFm.getAscent() / 2;
         g.drawString(desc, descX, descY);
 
         return null;

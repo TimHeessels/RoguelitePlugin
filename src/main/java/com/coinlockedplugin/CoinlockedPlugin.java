@@ -141,9 +141,7 @@ public class CoinlockedPlugin extends Plugin {
         return saveManager.get().packChoiceState;
     }
 
-    public List<PackOption> getCurrentPackOptions() {
-        return saveManager.get().currentPackOptions;
-    }
+    public List<PackOption> currentPackOptions = new ArrayList<>();
 
     @Getter
     private UnlockRegistry unlockRegistry;
@@ -236,6 +234,7 @@ public class CoinlockedPlugin extends Plugin {
         accountManager.start(accountKey -> {
             // swap active save here
             saveManager.onAccountChanged(accountKey);
+            loadPackOptionsFromConfig();
         });
         // Setup all unlockable stuff
         unlockRegistry = new UnlockRegistry();
@@ -258,7 +257,6 @@ public class CoinlockedPlugin extends Plugin {
         eventBus.register(inventoryBlocker);
         eventBus.register(teleportBlocker);
         overlayManager.add(inventoryFillerTooltip);
-        loadPackOptionsFromConfig();
         RefreshAllBlockers();
 
         // Build the panel
@@ -396,14 +394,11 @@ public class CoinlockedPlugin extends Plugin {
 
     void SetupCardButtons() {
         int index = 0;
-        for (PackOption option : getCurrentPackOptions()) {
+        for (PackOption option : currentPackOptions) {
             BufferedImage image = getOptionImageOrNull(option);
             if (image == null) {
                 //If there is any unlock not found, refund the pack and reset active option.
-                saveManager.get().packChoiceState = PackChoiceState.NONE;
-                saveManager.get().currentPackOptions = new ArrayList<>();
-                saveManager.get().packsBought--;
-                saveManager.markDirty();
+                refundPack();
                 return;
             }
 
@@ -411,6 +406,17 @@ public class CoinlockedPlugin extends Plugin {
                     option);
             index++;
         }
+    }
+
+    private void refundPack() {
+        ShowPluginChat(
+                "<col=ff0000><b>Pack refund!</b></col> There was an error loading one of the pack options, refunding your pack.",
+                2394);
+        saveManager.get().packChoiceState = PackChoiceState.NONE;
+        saveManager.get().currentPackOptionIds = new ArrayList<>();
+        currentPackOptions = new ArrayList<>();
+        saveManager.get().packsBought--;
+        saveManager.markDirty();
     }
 
     private BufferedImage getOptionImageOrNull(PackOption option) {
@@ -454,7 +460,7 @@ public class CoinlockedPlugin extends Plugin {
     }
 
     void SetupCardButton(int buttonIndex, String unlockName, String typeName, String description, BufferedImage image,
-            PackOption option) {
+                         PackOption option) {
         cardPickOverlay.setButton(buttonIndex, unlockName, typeName, description, image, () -> {
             clientThread.invoke(() -> onPackOptionSelected(option));
         });
@@ -471,17 +477,37 @@ public class CoinlockedPlugin extends Plugin {
     }
 
     private void loadPackOptionsFromConfig() {
+
+        Debug("saveManager.get().packChoiceState: " + saveManager.get().packChoiceState);
         if (saveManager.get().packChoiceState != PackChoiceState.PACKGENERATED) {
             return;
         }
 
         Debug("Player was choosing cards, loading from config");
+        Debug("Pack state: " + saveManager.get().packChoiceState);
+        Debug("Pack size from IDs: " + saveManager.get().currentPackOptionIds.size());
 
-        // Update unlockable list so we know what unlocks are new after selection
-        updateUnlockableList();
+        currentPackOptions = saveManager.get().currentPackOptionIds.stream()
+                .map(id -> {
+                    Unlock unlock = unlockRegistry.get(id);
+                    if (unlock != null) {
+                        return new UnlockPackOption(unlock);
+                    }
+                    return null;
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
 
-        if (saveManager.get().packChoiceState != null)
+        Debug("Pack size from currentPackOptions: " + currentPackOptions.size());
+
+        if (saveManager.get().packChoiceState == null)
+            return;
+        if (currentPackOptions.size() == 4) {
+            // Update unlockable list so we know what unlocks are new after selection
+            updateUnlockableList();
             SetupCardButtons();
+        } else
+            refundPack();
     }
 
     public void setFillerItemsShortAmount(int amount) {
@@ -624,6 +650,14 @@ public class CoinlockedPlugin extends Plugin {
         return Math.max(0, unlocked - saveManager.get().packsBought);
     }
 
+    public int getPossibleUnlockablesCount() {
+        return currentPossibleUnlockables.size();
+    }
+
+    public int getRestrictedUnlockablesCount() {
+        return currentLockedUnlockables.size();
+    }
+
     public void onBuyPackClicked() {
         if (clientThread == null || saveManager.get().packChoiceState == PackChoiceState.PACKGENERATED)
             return;
@@ -654,7 +688,6 @@ public class CoinlockedPlugin extends Plugin {
 
     private void PackBoughtSuccess() {
 
-        // TEMP: TODO TESTING NEW SAVE SYSTEM
         saveManager.get().packsBought++;
         saveManager.markDirty(); // Mark dirty to save on debounce
 
@@ -676,7 +709,8 @@ public class CoinlockedPlugin extends Plugin {
             option.onChosen(this);
 
             saveManager.get().packChoiceState = PackChoiceState.NONE;
-            saveManager.get().currentPackOptions = List.of();
+            currentPackOptions = List.of();
+            saveManager.get().currentPackOptionIds = new ArrayList<>();
 
             saveManager.markDirty();
         });
@@ -782,7 +816,6 @@ public class CoinlockedPlugin extends Plugin {
             return false;
         if (saveManager.get().unlockedIds.add(unlockID)) {
 
-            List<Unlock> lastPossibleUnlockables = new ArrayList<>(currentPossibleUnlockables);
             List<Unlock> lastLockedUnlockables = new ArrayList<>(currentLockedUnlockables);
             updateUnlockableList(); // Updates both lastPossibleUnlockables and lastLockedUnlockables
 
@@ -801,11 +834,13 @@ public class CoinlockedPlugin extends Plugin {
                 newPossibleString = "A new card can now appear in the booster packs: ";
             else if (newlyPossible.size() > 1)
                 newPossibleString = newlyPossible.size() + " new cards can now appear in the booster packs: ";
-            ShowPluginChat(newPossibleString, -1);
-            List<String> names = newlyPossible.stream()
-                    .map(Unlock::getDisplayName)
-                    .collect(Collectors.toList());
-            ShowPluginChat(readableListChat(names, "and", 80), -1);
+            if (!newPossibleString.equals("")) {
+                ShowPluginChat(newPossibleString, -1);
+                List<String> names = newlyPossible.stream()
+                        .map(Unlock::getDisplayName)
+                        .collect(Collectors.toList());
+                ShowPluginChat(readableListChat(names, "and", 80), -1);
+            }
 
             saveManager.get().lastUnlockedName = displayName;
             saveManager.markDirty();
@@ -912,7 +947,8 @@ public class CoinlockedPlugin extends Plugin {
         int optionCount = Math.min(4, pool.size());
         Set<UnlockType> usedUnlockTypes = new HashSet<>();
 
-        saveManager.get().currentPackOptions = new ArrayList<>(optionCount);
+        currentPackOptions = new ArrayList<>(optionCount);
+        saveManager.get().currentPackOptionIds = new ArrayList<>();
         for (int i = 0; i < optionCount; i++) {
             Unlock unlock = pickUnlockWithDiversityBias(pool, usedUnlockTypes);
             if (unlock == null)
@@ -920,7 +956,8 @@ public class CoinlockedPlugin extends Plugin {
 
             pool.remove(unlock);
             usedUnlockTypes.add(unlock.getType());
-            saveManager.get().currentPackOptions.add(new UnlockPackOption(unlock));
+            currentPackOptions.add(new UnlockPackOption(unlock));
+            saveManager.get().currentPackOptionIds.add(unlock.getId());
         }
 
         saveManager.get().packChoiceState = PackChoiceState.PACKGENERATED;

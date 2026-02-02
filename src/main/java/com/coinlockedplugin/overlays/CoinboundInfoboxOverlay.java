@@ -16,12 +16,10 @@ import java.awt.*;
 public class CoinboundInfoboxOverlay extends Overlay {
     private final CoinlockedPlugin plugin;
     private final PanelComponent panelComponent = new PanelComponent();
-    private final SaveManager saveManager;
 
     @Inject
-    public CoinboundInfoboxOverlay(CoinlockedPlugin plugin, SaveManager saveManager) {
+    public CoinboundInfoboxOverlay(CoinlockedPlugin plugin) {
         this.plugin = plugin;
-        this.saveManager = saveManager;
         setPosition(OverlayPosition.TOP_LEFT);
         setLayer(OverlayLayer.ABOVE_SCENE);
     }
@@ -35,14 +33,14 @@ public class CoinboundInfoboxOverlay extends Overlay {
         panelComponent.setPreferredSize(new Dimension(250, 0));
 
         //Display welcome message on first launch
-        if (saveManager.get().setupStage == SetupStage.DropAllItems) {
+        if (plugin.getSetupStage() == SetupStage.DropAllItems) {
             panelComponent.getChildren().add(LineComponent.builder()
                     .left("Welcome to the Coinbound game mode. Please drop all items you got from tutorial island.")
                     .build());
             return panelComponent.render(graphics);
         }
         //Go fill up inventory with flyers
-        if (saveManager.get().setupStage == SetupStage.GetFlyers || plugin.fillerItemsShort > 0) {
+        if (plugin.getSetupStage() == SetupStage.GetFlyers || plugin.fillerItemsShort > 0) {
             panelComponent.getChildren().add(LineComponent.builder()
                     .left("Please go to the Al Kharid flyerer and use the drop-trick to get " + plugin.fillerItemsShort + " more flyers to fill up your inventory.")
                     .build());
@@ -78,7 +76,7 @@ public class CoinboundInfoboxOverlay extends Overlay {
         }
         if (plugin.getAvailablePacksToBuy() == 1) {
             panelComponent.getChildren().add(LineComponent.builder()
-                    .left("You have a pack available to buy! Press the button at the top of the screen to open it.")
+                    .left("You have a pack available to open! Press the button at the top of the screen to open it.")
                     .build());
             panelComponent.getChildren().add(LineComponent.builder().build());
         }
